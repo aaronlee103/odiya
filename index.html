@@ -45,6 +45,8 @@
     font-weight: 800;
     letter-spacing: 2px;
     color: #111;
+       cursor: pointer;
+       -webkit-tap-highlight-color: transparent;
   }
 
   .story-toggle {
@@ -465,7 +467,7 @@
 
 <div class="container">
   <div class="topbar">
-    <div class="logo">ODIYA</div>
+    <div class="logo" onclick="resetToHome()">ODIYA</div>
     <button class="story-toggle" onclick="openStory()" data-i18n="storyBtn">Story</button>
   </div>
 
@@ -927,6 +929,21 @@ function getLocation() {
     },
     { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
   );
+
+ function resetToHome() {
+    document.getElementById('results').classList.remove('show');
+    const s = document.getElementById('initialStatus');
+    s.classList.remove('hidden');
+    s.querySelector('span').innerHTML = i18n[currentLang].initialMsg;
+    const btn = document.getElementById('locateBtn');
+    btn.disabled = false;
+    document.getElementById('spinner').style.display = 'none';
+    document.getElementById('locateBtnText').textContent = i18n[currentLang].findMe;
+    document.querySelector('[data-i18n="title"]').textContent = i18n[currentLang].title;
+    document.querySelector('[data-i18n="subtitle"]').textContent = i18n[currentLang].subtitle;
+    document.getElementById('storyOverlay').classList.remove('open');
+    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+ }
 }
 
 async function reverseGeocode(lat, lng) {
