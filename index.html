@@ -935,7 +935,7 @@ function getLocation() {
     document.getElementById('results').classList.remove('show');
     const s = document.getElementById('initialStatus');
     s.classList.remove('hidden');
-    s.querySelector('span').innerHTML = i18n[currentLang].initialMsg;
+    s.innerHTML = i18n[currentLang].initialMsg;
     const btn = document.getElementById('locateBtn');
     btn.disabled = false;
     document.getElementById('spinner').style.display = 'none';
