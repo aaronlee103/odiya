@@ -944,7 +944,6 @@ function getLocation() {
     document.querySelector('[data-i18n="subtitle"]').textContent = i18n[currentLang].subtitle;
     document.getElementById('storyOverlay').classList.remove('open');
     if ('speechSynthesis' in window) window.speechSynthesis.cancel();
- }
 }
 
 async function reverseGeocode(lat, lng) {
