@@ -1,0 +1,1294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>ODIYA - Emergency Location</title>
+<meta name="description" content="Emergency location helper. Know exactly where you are and communicate it in any language.">
+<meta name="theme-color" content="#111111">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="ODIYA">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta property="og:title" content="ODIYA - Emergency Location Helper">
+<meta property="og:description" content="Know exactly where you are. Communicate your location in any language during emergencies.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://odiya.info">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+    background: #fafafa;
+    color: #1a1a1a;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .container {
+    max-width: 420px;
+    margin: 0 auto;
+    padding: 24px 20px 40px;
+  }
+
+  /* Top bar */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 0 0;
+  }
+
+  .logo {
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    color: #111;
+  }
+
+  .story-toggle {
+    background: none;
+    border: 1px solid #ddd;
+    color: #888;
+    padding: 5px 12px;
+    border-radius: 100px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .story-toggle:active { background: #f0f0f0; }
+
+  /* Header */
+  .brand {
+    text-align: center;
+    padding: 20px 0 8px;
+  }
+
+  .brand h1 {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.8px;
+    color: #111;
+  }
+
+  .brand p {
+    font-size: 13px;
+    color: #888;
+    margin-top: 4px;
+  }
+
+  /* Story overlay */
+  .story-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    z-index: 1000;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+  }
+
+  .story-overlay.open { display: flex; align-items: flex-end; justify-content: center; }
+
+  .story-sheet {
+    background: #fff;
+    border-radius: 20px 20px 0 0;
+    width: 100%;
+    max-width: 480px;
+    max-height: 85vh;
+    overflow-y: auto;
+    padding: 28px 24px 40px;
+    animation: slideUp 0.3s ease-out;
+  }
+
+  @keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+
+  .story-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+  }
+
+  .story-header h2 {
+    font-size: 20px;
+    font-weight: 700;
+    color: #111;
+  }
+
+  .story-close {
+    background: #f0f0f0;
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    font-size: 18px;
+    color: #666;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .scenario {
+    padding: 16px 0;
+    border-bottom: 1px solid #f0f0f0;
+  }
+
+  .scenario:last-child { border-bottom: none; }
+
+  .scenario-icon {
+    font-size: 24px;
+    margin-bottom: 8px;
+  }
+
+  .scenario-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #222;
+    margin-bottom: 4px;
+  }
+
+  .scenario-desc {
+    font-size: 13px;
+    color: #888;
+    line-height: 1.6;
+  }
+
+  /* Lang */
+  .lang-row {
+    display: flex;
+    justify-content: center;
+    gap: 4px;
+    margin: 16px 0 28px;
+    flex-wrap: wrap;
+  }
+
+  .lang-btn {
+    background: transparent;
+    border: 1px solid #ddd;
+    color: #888;
+    padding: 4px 12px;
+    border-radius: 100px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .lang-btn.active {
+    background: #111;
+    border-color: #111;
+    color: #fff;
+  }
+
+  /* Main button */
+  .locate-btn {
+    width: 100%;
+    padding: 16px;
+    background: #111;
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: opacity 0.15s;
+  }
+
+  .locate-btn:active { opacity: 0.8; }
+  .locate-btn:disabled { opacity: 0.4; cursor: wait; }
+
+  .spinner {
+    width: 18px; height: 18px;
+    border: 2px solid rgba(255,255,255,0.25);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: none;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Status */
+  .status-msg {
+    text-align: center;
+    padding: 48px 20px;
+    color: #aaa;
+    font-size: 14px;
+    line-height: 1.7;
+  }
+
+  /* Results */
+  .results { display: none; }
+  .results.show { display: block; }
+
+  .section {
+    margin-top: 24px;
+  }
+
+  .section-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: #999;
+    margin-bottom: 8px;
+    font-weight: 600;
+  }
+
+  /* English script */
+  .script-card {
+    background: #fff;
+    border: 1px solid #e5e5e5;
+    border-radius: 12px;
+    padding: 20px;
+  }
+
+  .script-text {
+    font-size: 17px;
+    line-height: 1.7;
+    font-weight: 500;
+    color: #1a1a1a;
+  }
+
+  .script-text .hl {
+    font-weight: 700;
+    color: #000;
+    text-decoration: underline;
+    text-decoration-color: #ccc;
+    text-underline-offset: 3px;
+  }
+
+  .phonetic {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid #f0f0f0;
+    font-size: 13px;
+    color: #888;
+    line-height: 2;
+  }
+
+  .phonetic strong {
+    color: #555;
+    font-weight: 600;
+  }
+
+  /* Actions row */
+  .actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 24px;
+  }
+
+  .act-btn {
+    flex: 1;
+    padding: 12px 8px;
+    background: #fff;
+    border: 1px solid #e5e5e5;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #555;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.15s;
+  }
+
+  .act-btn:active { background: #f5f5f5; }
+
+  .act-btn svg {
+    width: 20px; height: 20px;
+    stroke: #666;
+    fill: none;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .act-btn.copied {
+    border-color: #333;
+    color: #333;
+  }
+
+  /* Call button */
+  .call-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 14px;
+    margin-top: 12px;
+    background: #fff;
+    border: 2px solid #1a1a1a;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #1a1a1a;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .call-btn:active {
+    background: #1a1a1a;
+    color: #fff;
+  }
+
+  /* Info cards */
+  .info-card {
+    background: #fff;
+    border: 1px solid #e5e5e5;
+    border-radius: 12px;
+    padding: 16px;
+    margin-top: 12px;
+  }
+
+  .info-label {
+    font-size: 11px;
+    color: #aaa;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    margin-bottom: 6px;
+  }
+
+  .info-value {
+    font-size: 15px;
+    font-weight: 500;
+    line-height: 1.5;
+    color: #333;
+  }
+
+  .coords-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .coord-val {
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+  }
+
+  .accuracy {
+    text-align: center;
+    margin-top: 10px;
+    font-size: 12px;
+    color: #999;
+  }
+
+  .timestamp {
+    font-size: 12px;
+    color: #bbb;
+    margin-top: 6px;
+  }
+
+  /* Map */
+  #map {
+    width: 100%;
+    height: 200px;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid #e5e5e5;
+    margin-top: 12px;
+    background: #f0f0f0;
+  }
+
+  .hint {
+    text-align: center;
+    font-size: 11px;
+    color: #ccc;
+    margin-top: 12px;
+  }
+
+  .tip {
+    background: #f7f7f7;
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-top: 16px;
+    font-size: 12px;
+    line-height: 1.6;
+    color: #888;
+  }
+
+  .tip strong { color: #666; }
+
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<!-- Story Overlay -->
+<div class="story-overlay" id="storyOverlay" onclick="if(event.target===this)closeStory()">
+  <div class="story-sheet">
+    <div class="story-header">
+      <h2 id="storyTitle">When to use ODIYA</h2>
+      <button class="story-close" onclick="closeStory()">&times;</button>
+    </div>
+    <div id="storyContent">
+      <div class="scenario">
+        <div class="scenario-icon">&#x1F697;</div>
+        <div class="scenario-title" data-i18n="s1Title">Car accident abroad</div>
+        <div class="scenario-desc" data-i18n="s1Desc">You're in a car accident in the US but can't explain your location in English. Open ODIYA, tap the button, and read the English script to 911.</div>
+      </div>
+      <div class="scenario">
+        <div class="scenario-icon">&#x1F3D4;</div>
+        <div class="scenario-title" data-i18n="s2Title">Lost while traveling</div>
+        <div class="scenario-desc" data-i18n="s2Desc">You're hiking or traveling in an unfamiliar area and need to tell someone exactly where you are. ODIYA gives you a precise address and GPS coordinates in the local language.</div>
+      </div>
+      <div class="scenario">
+        <div class="scenario-icon">&#x1F6A8;</div>
+        <div class="scenario-title" data-i18n="s3Title">Medical emergency</div>
+        <div class="scenario-desc" data-i18n="s3Desc">Someone is hurt and you need an ambulance, but you don't know the local address or emergency number. ODIYA detects your country and shows the right number to call.</div>
+      </div>
+      <div class="scenario">
+        <div class="scenario-icon">&#x1F4F1;</div>
+        <div class="scenario-title" data-i18n="s4Title">Share location with family</div>
+        <div class="scenario-desc" data-i18n="s4Desc">Tap "Share" to instantly send your exact location to family or friends via text message, including a Google Maps link.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="topbar">
+    <div class="logo">ODIYA</div>
+    <button class="story-toggle" onclick="openStory()" data-i18n="storyBtn">Story</button>
+  </div>
+
+  <div class="brand">
+    <h1 data-i18n="title">Where Am I?</h1>
+    <p data-i18n="subtitle">Emergency Location Helper</p>
+  </div>
+
+  <div class="lang-row">
+    <button class="lang-btn active" onclick="setLang('ko')">한국어</button>
+    <button class="lang-btn" onclick="setLang('en')">EN</button>
+    <button class="lang-btn" onclick="setLang('zh')">中文</button>
+    <button class="lang-btn" onclick="setLang('ja')">日本語</button>
+    <button class="lang-btn" onclick="setLang('es')">ES</button>
+  </div>
+
+  <button class="locate-btn" id="locateBtn" onclick="getLocation()">
+    <span class="spinner" id="spinner"></span>
+    <span id="locateBtnText" data-i18n="findMe">내 위치 찾기</span>
+  </button>
+
+  <div id="initialStatus" class="status-msg">
+    <span data-i18n="initialMsg">버튼을 누르면 현재 위치를 찾고<br>영어 위치 설명을 생성합니다</span>
+  </div>
+
+  <div class="results" id="results">
+
+    <div class="section">
+      <div class="section-label" data-i18n="scriptTitle">911에 읽어주세요 &middot; READ TO 911</div>
+      <div class="script-card">
+        <div class="script-text" id="englishScript"></div>
+        <div class="phonetic" id="phonetic"></div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="act-btn" id="copyBtn" onclick="copyLocation()">
+        <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+        <span data-i18n="copy">복사</span>
+      </button>
+      <button class="act-btn" onclick="shareLocation()">
+        <svg viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+        <span data-i18n="share">공유</span>
+      </button>
+      <button class="act-btn" onclick="speakEnglish()">
+        <svg viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 010 7.07"/></svg>
+        <span data-i18n="speak">읽기</span>
+      </button>
+      <button class="act-btn" onclick="openInMaps()">
+        <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        <span data-i18n="openMap">지도</span>
+      </button>
+    </div>
+
+    <a href="tel:911" class="call-btn" id="callBtn">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+      <span id="callBtnText">911 전화하기</span>
+    </a>
+
+    <div class="tip" id="tipBox">
+      <strong data-i18n="tipTitle">Tip</strong> &mdash;
+      <span data-i18n="tipText">"복사"를 눌러 위치를 문자로 보낼 수 있습니다. "읽기"로 영어 발음을 들을 수 있습니다.</span>
+    </div>
+
+    <div class="section">
+      <div class="section-label" data-i18n="detailsTitle">상세 정보</div>
+
+      <div class="info-card">
+        <div class="info-label" data-i18n="addressLabel">Address</div>
+        <div class="info-value" id="addressText">-</div>
+        <div class="timestamp" id="timestamp"></div>
+      </div>
+
+      <div class="info-card">
+        <div class="info-label">GPS</div>
+        <div class="coords-grid">
+          <div>
+            <div class="info-label" data-i18n="lat">Lat</div>
+            <div class="coord-val" id="lat">-</div>
+          </div>
+          <div>
+            <div class="info-label" data-i18n="lng">Lng</div>
+            <div class="coord-val" id="lng">-</div>
+          </div>
+        </div>
+        <div class="accuracy" id="accuracyBadge"></div>
+      </div>
+
+      <div id="map"></div>
+    </div>
+
+    <div class="hint" data-i18n="refreshHint">위치가 부정확하면 다시 눌러주세요</div>
+  </div>
+</div>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+
+<script>
+// --- Emergency numbers by country code (ISO 3166-1 alpha-2) ---
+const emergencyNumbers = {
+  US:'911',CA:'911',MX:'911',
+  KR:'119',JP:'119',CN:'120',TW:'119',HK:'999',
+  GB:'999',IE:'999',AU:'000',NZ:'111',
+  DE:'112',FR:'112',IT:'112',ES:'112',PT:'112',NL:'112',BE:'112',AT:'112',CH:'112',
+  SE:'112',NO:'112',DK:'112',FI:'112',PL:'112',CZ:'112',HU:'112',RO:'112',
+  GR:'112',TR:'112',HR:'112',SK:'112',BG:'112',SI:'112',LT:'112',LV:'112',EE:'112',
+  RU:'112',UA:'112',
+  IN:'112',PH:'911',TH:'1669',VN:'115',MY:'999',SG:'995',ID:'112',
+  BR:'192',AR:'107',CL:'131',CO:'123',PE:'105',
+  ZA:'10177',NG:'112',EG:'123',KE:'999',GH:'112',
+  SA:'997',AE:'999',IL:'101',QA:'999',KW:'112',
+  _default:'112'
+};
+
+// --- Phonetic guides per UI language ---
+const phoneticGuides = {
+  ko: {
+    label: '발음 가이드',
+    lines: [
+      ['아이 니드 여프', 'I need help'],
+      ['아이 앰 로케이티드 앳', 'I am located at'],
+      ['래티튜드', 'Latitude'],
+      ['롱기튜드', 'Longitude']
+    ]
+  },
+  en: {
+    label: 'Pronunciation Guide',
+    lines: [
+      ['ai need help', 'I need help'],
+      ['ai am lo-KAY-tid at', 'I am located at'],
+      ['LA-ti-tood', 'Latitude'],
+      ['LON-ji-tood', 'Longitude']
+    ]
+  },
+  zh: {
+    label: '发音指南',
+    lines: [
+      ['爱 尼德 嗨尔普', 'I need help'],
+      ['爱 艾姆 洛凯提德 艾特', 'I am located at'],
+      ['莱提图德', 'Latitude'],
+      ['朗吉图德', 'Longitude']
+    ]
+  },
+  ja: {
+    label: '発音ガイド',
+    lines: [
+      ['アイ ニード ヘルプ', 'I need help'],
+      ['アイ アム ロケイテッド アット', 'I am located at'],
+      ['ラティテュード', 'Latitude'],
+      ['ロンジテュード', 'Longitude']
+    ]
+  },
+  es: {
+    label: 'Guía de pronunciación',
+    lines: [
+      ['ai niid jelp', 'I need help'],
+      ['ai am lou-KEI-ted at', 'I am located at'],
+      ['LA-ti-tud', 'Latitude'],
+      ['LON-yi-tud', 'Longitude']
+    ]
+  }
+};
+
+const i18n = {
+  ko: {
+    title: "지금 어디?",
+    subtitle: "긴급 위치 알리미",
+    findMe: "내 위치 찾기",
+    finding: "찾는 중...",
+    initialMsg: "버튼을 누르면 현재 위치를 찾고<br>현지 언어로 위치 설명을 생성합니다",
+    scriptLabel: "읽어주세요",
+    readTo: "에 읽어주세요",
+    copy: "복사",
+    share: "공유",
+    openMap: "지도",
+    speak: "읽기",
+    callText: "전화하기",
+    tipTitle: "Tip",
+    tipText: '"복사"를 눌러 위치를 문자로 보낼 수 있습니다. "읽기"로 발음을 들을 수 있습니다.',
+    detailsTitle: "상세 정보",
+    addressLabel: "주소",
+    lat: "위도",
+    lng: "경도",
+    refreshHint: "위치가 부정확하면 다시 눌러주세요",
+    copied: "복사됨",
+    accuracyGood: "정확도 높음",
+    accuracyOk: "정확도 보통",
+    accuracyPoor: "정확도 낮음",
+    errorDenied: "위치 접근이 거부되었습니다.\n브라우저 설정에서 위치 권한을 허용해주세요.",
+    errorUnavail: "위치 정보를 가져올 수 없습니다.\nGPS가 켜져 있는지 확인해주세요.",
+    errorTimeout: "시간 초과. 다시 시도해주세요.",
+    errorGeneral: "위치를 가져올 수 없습니다.",
+    noGeo: "이 브라우저는 위치 서비스를 지원하지 않습니다.",
+  },
+  en: {
+    title: "Where Am I?",
+    subtitle: "Emergency Location Helper",
+    findMe: "Find My Location",
+    finding: "Finding...",
+    initialMsg: "Press the button to find your location<br>and generate a location description",
+    scriptLabel: "Read this to",
+    readTo: "",
+    copy: "Copy",
+    share: "Share",
+    openMap: "Map",
+    speak: "Speak",
+    callText: "Call",
+    tipTitle: "Tip",
+    tipText: 'Tap "Copy" to send your location via text. "Speak" plays the pronunciation.',
+    detailsTitle: "Details",
+    addressLabel: "Address",
+    lat: "Lat",
+    lng: "Lng",
+    refreshHint: "Tap again if location is inaccurate",
+    copied: "Copied",
+    accuracyGood: "High accuracy",
+    accuracyOk: "Medium accuracy",
+    accuracyPoor: "Low accuracy",
+    errorDenied: "Location access denied.\nPlease allow location in browser settings.",
+    errorUnavail: "Location unavailable.\nPlease check if GPS is enabled.",
+    errorTimeout: "Timed out. Please try again.",
+    errorGeneral: "Could not get location.",
+    noGeo: "Location services not supported.",
+  },
+  zh: {
+    title: "我在哪里?",
+    subtitle: "紧急位置助手",
+    findMe: "查找我的位置",
+    finding: "查找中...",
+    initialMsg: "按下按钮查找位置<br>并生成位置说明",
+    scriptLabel: "向",
+    readTo: "朚读",
+    copy: "复制",
+    share: "分享",
+    openMap: "地图",
+    speak: "朗读",
+    callText: "拨打",
+    tipTitle: "提示",
+    tipText: '点击"复制"通过短信发送位置。"朗读"可听发音。',
+    detailsTitle: "详细信息",
+    addressLabel: "地址",
+    lat: "纬度",
+    lng: "经度",
+    refreshHint: "位置不准确请再次点击",
+    copied: "已复制",
+    accuracyGood: "精度高",
+    accuracyOk: "精度中",
+    accuracyPoor: "精度低",
+    errorDenied: "位置访问被拒绝。\n请在浏览器设置中允许位置权限。",
+    errorUnavail: "无法获取位置。\n请检查GPS是否开启。",
+    errorTimeout: "超时，请重试。",
+    errorGeneral: "无法获取位置。",
+    noGeo: "浏览器不支持位置服务。",
+  },
+  ja: {
+    title: "今どこ?",
+    subtitle: "緊急位置ヘルパー",
+    findMe: "現在地を探す",
+    finding: "検索中...",
+    initialMsg: "ボタンを押すと現在地を探し<br>位置説明を生成します",
+    scriptLabel: "",
+    readTo: "に読んでください",
+    copy: "コピー",
+    share: "共有",
+    openMap: "地図",
+    speak: "読む",
+    callText: "に電話",
+    tipTitle: "ヒント",
+    tipText: '「コピー」でテキスト送信可能。「読む」で発音を聞けます。',
+    detailsTitle: "詳細情報",
+    addressLabel: "住所",
+    lat: "緯度",
+    lng: "経度",
+    refreshHint: "位置が不正確な場合はもう一度押してください",
+    copied: "コピー済",
+    accuracyGood: "精度：高",
+    accuracyOk: "精度：中",
+    accuracyPoor: "精度：低",
+    errorDenied: "位置情報へのアクセスが拒否されました。\nブラウザ設定で許可してください。",
+    errorUnavail: "位置情報を取得できません。\nGPSを確認してください。",
+    errorTimeout: "タイムアウト。もう一度お試しください。",
+    errorGeneral: "位置を取得できません。",
+    noGeo: "位置情報サービス非対応。",
+  },
+  es: {
+    title: "Dónde Estoy?",
+    subtitle: "Ayuda de ubicación de emergencia",
+    findMe: "Encontrar ubicación",
+    finding: "Buscando...",
+    initialMsg: "Presione para encontrar su ubicación<br>y generar una descripción",
+    scriptLabel: "Lea esto al",
+    readTo: "",
+    copy: "Copiar",
+    share: "Compartir",
+    openMap: "Mapa",
+    speak: "Leer",
+    callText: "Llamar",
+    tipTitle: "Consejo",
+    tipText: '"Copiar" para enviar por mensaje. "Leer" para escuchar la pronunciación.',
+    detailsTitle: "Detalles",
+    addressLabel: "Dirección",
+    lat: "Lat",
+    lng: "Lng",
+    refreshHint: "Si es inexacta, presione de nuevo",
+    copied: "Copiado",
+    accuracyGood: "Precisión alta",
+    accuracyOk: "Precisión media",
+    accuracyPoor: "Precisión baja",
+    errorDenied: "Acceso denegado.\nPermita la ubicación en configuración.",
+    errorUnavail: "Ubicación no disponible.\nVerifique GPS.",
+    errorTimeout: "Tiempo agotado. Intente de nuevo.",
+    errorGeneral: "No se pudo obtener ubicación.",
+    noGeo: "Navegador no compatible.",
+  }
+};
+
+let currentLang = 'ko';
+let currentLat = null;
+let currentLng = null;
+let leafletMap = null;
+let marker = null;
+let englishSpeechText = '';
+let shareLocationText = '';
+let detectedCountryCode = null;
+let detectedEmergencyNum = '112';
+let detectedCountryName = '';
+
+function getEmergencyNumber(countryCode) {
+  const cc = (countryCode || '').toUpperCase();
+  return emergencyNumbers[cc] || emergencyNumbers._default;
+}
+
+function updateEmergencyUI() {
+  const num = detectedEmergencyNum;
+  const t = i18n[currentLang];
+
+  // Update script title
+  const titleEl = document.querySelector('[data-i18n="scriptTitle"]');
+  if (titleEl) {
+    if (currentLang === 'ja') {
+      titleEl.textContent = `${num}${t.readTo} · READ TO ${num}`;
+    } else if (currentLang === 'zh') {
+      titleEl.textContent = `${t.scriptLabel}${num}${t.readTo} · READ TO ${num}`;
+    } else if (currentLang === 'ko') {
+      titleEl.textContent = `${num}${t.readTo} · READ TO ${num}`;
+    } else {
+      titleEl.textContent = `${t.scriptLabel} ${num}`;
+    }
+  }
+
+  // Update call button
+  const callBtn = document.getElementById('callBtn');
+  const callText = document.getElementById('callBtnText');
+  if (callBtn) callBtn.href = `tel:${num}`;
+  if (callText) {
+    if (currentLang === 'ja') {
+      callText.textContent = `${num}${t.callText}`;
+    } else if (currentLang === 'zh') {
+      callText.textContent = `${t.callText}${num}`;
+    } else if (currentLang === 'ko') {
+      callText.textContent = `${num} ${t.callText}`;
+    } else {
+      callText.textContent = `${t.callText} ${num}`;
+    }
+  }
+}
+
+function setLang(lang) {
+  currentLang = lang;
+  const map = {ko:'한국어',en:'EN',zh:'中文',ja:'日本語',es:'ES'};
+  document.querySelectorAll('.lang-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.textContent.trim() === map[lang]);
+  });
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (key === 'scriptTitle') return; // handled separately
+    // Check story i18n first, then main i18n
+    const si = storyI18n[lang];
+    if (si && si[key]) { el.textContent = si[key]; return; }
+    if (i18n[lang] && i18n[lang][key]) {
+      if (key === 'initialMsg' || key === 'tipText') {
+        el.innerHTML = i18n[lang][key];
+      } else {
+        el.textContent = i18n[lang][key];
+      }
+    }
+  });
+  const btn = document.getElementById('locateBtnText');
+  if (!document.getElementById('locateBtn').disabled) {
+    btn.textContent = i18n[lang].findMe;
+  }
+  updateEmergencyUI();
+
+  // Re-render phonetic if results are showing
+  if (document.getElementById('results').classList.contains('show')) {
+    renderPhonetic();
+  }
+}
+
+function renderPhonetic() {
+  const guide = phoneticGuides[currentLang] || phoneticGuides.en;
+  const el = document.getElementById('phonetic');
+  let html = `<strong>${guide.label}</strong><br>`;
+  guide.lines.forEach(([pron, eng]) => {
+    html += `${pron} = ${eng}<br>`;
+  });
+  el.innerHTML = html;
+}
+
+function getLocation() {
+  if (!navigator.geolocation) { alert(i18n[currentLang].noGeo); return; }
+
+  const btn = document.getElementById('locateBtn');
+  const spinner = document.getElementById('spinner');
+  const btnText = document.getElementById('locateBtnText');
+
+  btn.disabled = true;
+  spinner.style.display = 'block';
+  btnText.textContent = i18n[currentLang].finding;
+
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      btn.disabled = false;
+      spinner.style.display = 'none';
+      btnText.textContent = i18n[currentLang].findMe;
+
+      currentLat = pos.coords.latitude;
+      currentLng = pos.coords.longitude;
+      const accuracy = pos.coords.accuracy;
+
+      document.getElementById('initialStatus').classList.add('hidden');
+      document.getElementById('results').classList.add('show');
+      document.getElementById('lat').textContent = currentLat.toFixed(6);
+      document.getElementById('lng').textContent = currentLng.toFixed(6);
+
+      const badge = document.getElementById('accuracyBadge');
+      if (accuracy <= 20) badge.textContent = `${i18n[currentLang].accuracyGood} (~${Math.round(accuracy)}m)`;
+      else if (accuracy <= 100) badge.textContent = `${i18n[currentLang].accuracyOk} (~${Math.round(accuracy)}m)`;
+      else badge.textContent = `${i18n[currentLang].accuracyPoor} (~${Math.round(accuracy)}m)`;
+
+      document.getElementById('timestamp').textContent = new Date().toLocaleString();
+      reverseGeocode(currentLat, currentLng);
+      updateMap(currentLat, currentLng);
+    },
+    (err) => {
+      btn.disabled = false;
+      spinner.style.display = 'none';
+      btnText.textContent = i18n[currentLang].findMe;
+
+      let msg = i18n[currentLang].errorGeneral;
+      if (err.code === 1) msg = i18n[currentLang].errorDenied;
+      else if (err.code === 2) msg = i18n[currentLang].errorUnavail;
+      else if (err.code === 3) msg = i18n[currentLang].errorTimeout;
+
+      const s = document.getElementById('initialStatus');
+      s.textContent = msg;
+      s.classList.remove('hidden');
+    },
+    { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+  );
+}
+
+async function reverseGeocode(lat, lng) {
+  try {
+    const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1&accept-language=en`);
+    const d = await r.json();
+    if (d && d.display_name) {
+      // Detect country
+      const cc = d.address && d.address.country_code ? d.address.country_code.toUpperCase() : null;
+      detectedCountryCode = cc;
+      detectedCountryName = (d.address && d.address.country) || '';
+      detectedEmergencyNum = getEmergencyNumber(cc);
+      updateEmergencyUI();
+
+      document.getElementById('addressText').textContent = d.display_name;
+      generateScript(lat, lng, d);
+    } else {
+      document.getElementById('addressText').textContent = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+      generateScriptCoords(lat, lng);
+    }
+  } catch(e) {
+    document.getElementById('addressText').textContent = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+    generateScriptCoords(lat, lng);
+  }
+}
+
+function generateScript(lat, lng, data) {
+  const a = data.address || {};
+  const road = a.road || a.pedestrian || a.footway || '';
+  const num = a.house_number || '';
+  const city = a.city || a.town || a.village || a.county || '';
+  const state = a.state || '';
+  const country = a.country || '';
+
+  let parts = [];
+  if (num && road) parts.push(`${num} ${road}`);
+  else if (road) parts.push(`near ${road}`);
+  if (city) parts.push(city);
+  if (state) parts.push(state);
+  if (country) parts.push(country);
+  const loc = parts.join(', ');
+
+  // Determine local language for the script
+  const localLang = getLocalLanguage();
+  const scriptLines = buildScriptLines(loc, lat, lng, localLang);
+
+  englishSpeechText = scriptLines.speech;
+  shareLocationText = scriptLines.shareText;
+
+  document.getElementById('englishScript').innerHTML = scriptLines.html;
+  renderPhonetic();
+}
+
+function generateScriptCoords(lat, lng) {
+  const localLang = getLocalLanguage();
+  const scriptLines = buildScriptLines(null, lat, lng, localLang);
+
+  englishSpeechText = scriptLines.speech;
+  shareLocationText = scriptLines.shareText;
+
+  document.getElementById('englishScript').innerHTML = scriptLines.html;
+  renderPhonetic();
+}
+
+// Determine what language the emergency script should be in based on detected country
+function getLocalLanguage() {
+  const cc = detectedCountryCode;
+  if (!cc) return 'en';
+  const map = {
+    US:'en',CA:'en',GB:'en',AU:'en',NZ:'en',IE:'en',
+    KR:'ko',
+    JP:'ja',
+    CN:'zh',TW:'zh',HK:'zh',
+    ES:'es',MX:'es',AR:'es',CL:'es',CO:'es',PE:'es',
+    FR:'fr',DE:'de',IT:'it',PT:'pt',BR:'pt',
+    RU:'ru',TH:'th',VN:'vi',
+  };
+  return map[cc] || 'en';
+}
+
+// Build the script in the local language of the country
+function buildScriptLines(loc, lat, lng, localLang) {
+  const templates = {
+    en: {
+      help: 'I need help.',
+      locAt: 'I am located at',
+      gps: 'My GPS coordinates are:',
+      latLabel: 'Latitude',
+      lngLabel: 'Longitude',
+    },
+    ko: {
+      help: '도와주세요. (I need help.)',
+      locAt: '제 위치는 (I am located at)',
+      gps: 'GPS 좌표: (My GPS coordinates are:)',
+      latLabel: '위도 (Latitude)',
+      lngLabel: '경도 (Longitude)',
+    },
+    ja: {
+      help: '助けてください。(I need help.)',
+      locAt: '私の場所は (I am located at)',
+      gps: 'GPS座標: (My GPS coordinates are:)',
+      latLabel: '緯度 (Latitude)',
+      lngLabel: '経度 (Longitude)',
+    },
+    zh: {
+      help: '我需要帮助。(I need help.)',
+      locAt: '我的位置在 (I am located at)',
+      gps: 'GPS坐标: (My GPS coordinates are:)',
+      latLabel: '纬度 (Latitude)',
+      lngLabel: '经度 (Longitude)',
+    },
+    es: {
+      help: 'Necesito ayuda. (I need help.)',
+      locAt: 'Estoy ubicado en (I am located at)',
+      gps: 'Mis coordenadas GPS son: (My GPS coordinates are:)',
+      latLabel: 'Latitud (Latitude)',
+      lngLabel: 'Longitud (Longitude)',
+    },
+    fr: {
+      help: "J'ai besoin d'aide. (I need help.)",
+      locAt: 'Je suis situé à (I am located at)',
+      gps: 'Mes coordonnées GPS sont: (My GPS coordinates are:)',
+      latLabel: 'Latitude',
+      lngLabel: 'Longitude',
+    },
+    de: {
+      help: 'Ich brauche Hilfe. (I need help.)',
+      locAt: 'Ich befinde mich bei (I am located at)',
+      gps: 'Meine GPS-Koordinaten: (My GPS coordinates are:)',
+      latLabel: 'Breitengrad (Latitude)',
+      lngLabel: 'Längengrad (Longitude)',
+    },
+    pt: {
+      help: 'Preciso de ajuda. (I need help.)',
+      locAt: 'Estou localizado em (I am located at)',
+      gps: 'Minhas coordenadas GPS: (My GPS coordinates are:)',
+      latLabel: 'Latitude',
+      lngLabel: 'Longitude',
+    },
+    it: {
+      help: 'Ho bisogno di aiuto. (I need help.)',
+      locAt: 'Mi trovo a (I am located at)',
+      gps: 'Le mie coordinate GPS: (My GPS coordinates are:)',
+      latLabel: 'Latitudine (Latitude)',
+      lngLabel: 'Longitudine (Longitude)',
+    },
+    ru: {
+      help: 'Мне нужна помощь. (I need help.)',
+      locAt: 'Я нахожусь по адресу (I am located at)',
+      gps: 'Мои GPS координаты: (My GPS coordinates are:)',
+      latLabel: 'Широта (Latitude)',
+      lngLabel: 'Долгота (Longitude)',
+    },
+    th: {
+      help: 'ช่วยด้วย (I need help.)',
+      locAt: 'ฉันอยู่ที่ (I am located at)',
+      gps: 'พิกัด GPS: (My GPS coordinates are:)',
+      latLabel: 'ละติจูด (Latitude)',
+      lngLabel: 'ลองจิจูด (Longitude)',
+    },
+    vi: {
+      help: 'Tôi cần giúp đỡ. (I need help.)',
+      locAt: 'Tôi đang ở tại (I am located at)',
+      gps: 'Tọa độ GPS: (My GPS coordinates are:)',
+      latLabel: 'Vĩ độ (Latitude)',
+      lngLabel: 'Kinh độ (Longitude)',
+    },
+  };
+
+  const t = templates[localLang] || templates.en;
+  const latStr = lat.toFixed(6);
+  const lngStr = lng.toFixed(6);
+
+  let html, speech, shareText;
+
+  if (loc) {
+    html = `<span class="hl">${t.help}</span><br><br>` +
+      `${t.locAt}<br><span class="hl">${loc}</span><br><br>` +
+      `${t.gps}<br>${t.latLabel} <span class="hl">${latStr}</span><br>` +
+      `${t.lngLabel} <span class="hl">${lngStr}</span>`;
+
+    // Share text: location only, no "I need help"
+    shareText = `${loc}\nLatitude ${latStr}, Longitude ${lngStr}`;
+
+    // Speech includes help message (for emergency calls)
+    if (localLang === 'en') {
+      speech = `I need help. I am located at ${loc}. My GPS coordinates are: latitude ${latStr}, longitude ${lngStr}.`;
+    } else {
+      speech = `${t.help.replace(/\s*\(.*\)/, '')} ${t.locAt.replace(/\s*\(.*\)/, '')} ${loc}. GPS: latitude ${latStr}, longitude ${lngStr}.`;
+    }
+  } else {
+    html = `<span class="hl">${t.help}</span><br><br>` +
+      `${t.gps}<br>${t.latLabel} <span class="hl">${latStr}</span><br>` +
+      `${t.lngLabel} <span class="hl">${lngStr}</span>`;
+
+    shareText = `Latitude ${latStr}, Longitude ${lngStr}`;
+    speech = `I need help. My GPS coordinates are: latitude ${latStr}, longitude ${lngStr}.`;
+  }
+
+  return { html, speech, shareText };
+}
+
+function updateMap(lat, lng) {
+  const el = document.getElementById('map');
+  el.innerHTML = '';
+
+  if (!leafletMap) {
+    leafletMap = L.map('map', { zoomControl: false }).setView([lat, lng], 16);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+      attribution: '',
+      maxZoom: 19
+    }).addTo(leafletMap);
+  } else {
+    leafletMap.setView([lat, lng], 16);
+  }
+
+  if (marker) leafletMap.removeLayer(marker);
+
+  const icon = L.divIcon({
+    html: '<div style="width:14px;height:14px;background:#111;border:2.5px solid #fff;border-radius:50%;box-shadow:0 1px 4px rgba(0,0,0,0.3);"></div>',
+    iconSize: [14, 14],
+    iconAnchor: [7, 7],
+    className: ''
+  });
+
+  marker = L.marker([lat, lng], { icon }).addTo(leafletMap);
+  L.circle([lat, lng], { radius: 40, color: '#999', fillColor: '#999', fillOpacity: 0.08, weight: 1 }).addTo(leafletMap);
+
+  setTimeout(() => leafletMap.invalidateSize(), 100);
+}
+
+function copyLocation() {
+  const text = shareLocationText + `\n\nhttps://maps.google.com/?q=${currentLat},${currentLng}`;
+  navigator.clipboard.writeText(text).then(() => {
+    const b = document.getElementById('copyBtn');
+    b.classList.add('copied');
+    b.querySelector('span').textContent = i18n[currentLang].copied;
+    setTimeout(() => {
+      b.classList.remove('copied');
+      b.querySelector('span').textContent = i18n[currentLang].copy;
+    }, 1500);
+  }).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+  });
+}
+
+function shareLocation() {
+  const text = shareLocationText + `\n\nhttps://maps.google.com/?q=${currentLat},${currentLng}`;
+  if (navigator.share) {
+    navigator.share({ title: 'ODIYA', text, url: `https://maps.google.com/?q=${currentLat},${currentLng}` }).catch(() => {});
+  } else { copyLocation(); }
+}
+
+function openInMaps() {
+  window.open(`https://maps.google.com/?q=${currentLat},${currentLng}`, '_blank');
+}
+
+function speakEnglish() {
+  if ('speechSynthesis' in window && englishSpeechText) {
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(englishSpeechText);
+    // Detect speech language based on country
+    const localLang = getLocalLanguage();
+    const langMap = {en:'en-US',ko:'ko-KR',ja:'ja-JP',zh:'zh-CN',es:'es-ES',fr:'fr-FR',de:'de-DG',pt:'pt-BR',it:'it-IT',ru:'ru-RU',th:'th-TH',vi:'vi-VN'};
+    u.lang = langMap[localLang] || 'en-US';
+    u.rate = 0.8;
+    window.speechSynthesis.speak(u);
+  }
+}
+
+// --- Story i18n ---
+const storyI18n = {
+  ko: {
+    storyBtn: 'Story',
+    storyTitle: 'ODIYA는 이럴 때 쓰세요',
+    s1Title: '해외에서 교통사고',
+    s1Desc: '미국에서 차 사고가 났는데 영어로 위치를 설명할 수 없을 때. ODIYA를 열고 버튼만 누르면 911에 읽어줄 영어 문장이 바로 나옵니다.',
+    s2Title: '여행 중 길을 잃었을 때',
+    s2Desc: '낯선 곳에서 하이킹이나 여행 중에 내 위치를 정확히 알려야 할 때. 주소와 GPS 좌표를 현지 언어로 제공합니다.',
+    s3Title: '응급 의료 상황�,
+    s3Desc: '누군가 다쳤는데 주소도 모르고 긴급번호도 모를 때. ODIYA가 나라를 감지해서 맞는 긴급번호를 보여줍니다.',
+    s4Title: '가족에게 위치 공유',
+    s4Desc: '"공유" 버튼으로 Google Maps 링크와 함께 정확한 위치를 문자로 바로 보낼 수 있습니다.',
+  },
+  en: {
+    storyBtn: 'Story',
+    storyTitle: 'When to use ODIYA',
+    s1Title: 'Car accident abroad',
+    s1Desc: "You're in a car accident but can't explain your location in the local language. Open ODIYA, tap the button, and read the script to emergency services.",
+    s2Title: 'Lost while traveling',
+    s2Desc: "You're hiking or traveling in an unfamiliar area and need to tell someone exactly where you are. ODIYA gives you a precise address and GPS coordinates.",
+    s3Title: 'Medical emergency',
+    s3Desc: "Someone is hurt and you need an ambulance, but you don't know the address or emergency number. ODIYA detects your country and shows the right number.",
+    s4Title: 'Share location with family',
+    s4Desc: 'Tap "Share" to send your exact location via text message, including a Google Maps link.',
+  },
+  zh: {
+    storyBtn: '场景',
+    storyTitle: '什么时候用 ODIYA',
+    s1Title: '海外交通事故',
+    s1Desc: '在国外发生车祸，无法用当地语言说明位置。打开ODIYA，按下按钮，向急救服务朚读屏幕上的文字。',
+    s2Title: '旅行中迷路',
+    s2Desc: '在陌生的地方徒步或旅行时，需要准确告知他人你的位置。ODIYA提供精确地址和GPS坐标。',
+    s3Title: '医疗紧急情况',
+    s3Desc: '有人受伤需要救护车，但你不知道地址或急救电话。ODIYA自动检测所在国家并显示正确的急救号码。',
+    s4Title: '向家人分享位置',
+    s4Desc: '点击"分享"即可通过短信即可送精确位置，包含Google Maps链接。',
+  },
+  ja: {
+    storyBtn: 'Story',
+    storyTitle: 'ODIYAはこんな時に',
+    s1Title: '海外での交通事故',
+    s1Desc: '海外で事故に遭い、現地語で場所を説明できない時。ODIYAを開いてボタンを押すだけで、緊急サービスに読み上げる文章が表示されます。',
+    s2Title: '旅行中に道に迷った時',
+    s2Desc: '見知らぬ場所でハイキングや旅行中、正確な位置を伝える必要がある時。住所とGPS座標を提供します。',
+    s3Title: '医療緊急事態',
+    s3Desc: '誰かが怪我をして救急車が必要だが、住所も緊急番号もわからない時。ODIYAが国を検出して正しい番号を表示します。',
+    s4Title: '家旇に位置を共有',
+    s4Desc: '"共有」ボタンでGoogle Mapsリンク付きの正確な位置をメッセージで送れます。',
+  },
+  es: {
+    storyBtn: 'Historia',
+    storyTitle: 'Cuándo usar ODIYA',
+    s1Title: 'Accidente de auto en el extranjero',
+    s1Desc: 'Tienes un accidente pero no puedes explicar tu ubicación en el idioma local. Abre ODIYA, toca el botón y lee el texto a los servicios de emergencia.',
+    s2Title: 'Perdido durante un viaje',
+    s2Desc: 'Estás de excursión o viajando en un área desconocida y necesitas indicar tu ubicación exacta. ODIYA te da la dirección y coordenadas GPS.',
+    s3Title: 'Emergencia médica',
+    s3Desc: 'Alguien está herido y necesitas una ambulancia, pero no conoces la dirección ni el número de emergencia. ODIYA detecta tu país y muestra el número correcto.',
+    s4Title: 'Compartir ubicación con familia',
+    s4Desc: 'Toca "Compartir" para enviar tu ubicación exacta por mensaje de texto, incluyendo un enlace de Google Maps.',
+  }
+};
+
+function openStory() {
+  const s = storyI18n[currentLang] || storyI18n.en;
+  document.getElementById('storyTitle').textContent = s.storyTitle;
+  // Update story content
+  document.querySelectorAll('[data-i18n^="s"]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (s[key]) el.textContent = s[key];
+  });
+  document.getElementById('storyOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeStory() {
+  document.getElementById('storyOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+setLang('ko');
+
+// Register Service Worker for PWA
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+</script>
+</body>
+</html>
