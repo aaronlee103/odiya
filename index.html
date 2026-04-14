@@ -523,6 +523,11 @@
         <svg viewBox="0 0 24 24"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
         <span data-i18n="share">공유</span>
       </button>
+      <button class="act-btn" onclick="triggerPhotoShare()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        <span data-i18n="photo">사진</span>
+      </button>
+      <input type="file" id="photoInput" accept="image/*" capture="environment" style="display:none" onchange="handlePhotoSelected(event)">
       <button class="act-btn" onclick="speakEnglish()">
         <svg viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 010 7.07"/></svg>
         <span data-i18n="speak">읽기</span>
@@ -657,7 +662,7 @@ const i18n = {
     scriptLabel: "읽어주세요",
     readTo: "에 읽어주세요",
     copy: "복사",
-    share: "공유",
+    share: "공유", photo: "사진",
     openMap: "지도",
     speak: "읽기",
     callText: "전화하기",
@@ -687,7 +692,7 @@ const i18n = {
     scriptLabel: "Read this to",
     readTo: "",
     copy: "Copy",
-    share: "Share",
+    share: "Share", photo: "Photo",
     openMap: "Map",
     speak: "Speak",
     callText: "Call",
@@ -747,7 +752,7 @@ const i18n = {
     scriptLabel: "",
     readTo: "に読んでください",
     copy: "コピー",
-    share: "共有",
+    share: "共有", photo: "写真",
     openMap: "地図",
     speak: "読む",
     callText: "に電話",
@@ -777,7 +782,7 @@ const i18n = {
     scriptLabel: "Lea esto al",
     readTo: "",
     copy: "Copiar",
-    share: "Compartir",
+    share: "Compartir", photo: "Foto",
     openMap: "Mapa",
     speak: "Leer",
     callText: "Llamar",
@@ -1320,6 +1325,65 @@ function openStory() {
 function closeStory() {
   document.getElementById('storyOverlay').classList.remove('open');
   document.body.style.overflow = '';
+}
+
+
+// --- Photo + Location share ---
+function triggerPhotoShare() {
+  const input = document.getElementById('photoInput');
+  if (!input) return;
+  input.value = '';
+  input.click();
+}
+
+async function handlePhotoSelected(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+  try {
+    // Build location text from existing script content
+    const scriptEl = document.getElementById('englishScript');
+    const locationText = scriptEl ? scriptEl.innerText.trim() : '';
+    const lat = (typeof currentLat !== 'undefined') ? currentLat : null;
+    const lng = (typeof currentLng !== 'undefined') ? currentLng : null;
+    let mapLink = '';
+    if (lat != null && lng != null) {
+      mapLink = 'https://maps.google.com/?q=' + lat + ',' + lng;
+    }
+    const shareText = [locationText, mapLink].filter(Boolean).join('\n\n');
+    const shareData = {
+      title: 'ODIYA - Emergency Location',
+      text: shareText,
+      files: [file]
+    };
+    if (navigator.canShare && navigator.canShare(shareData) && navigator.share) {
+      await navigator.share(shareData);
+      return;
+    }
+    // Fallback 1: share text only via Web Share API
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: shareData.title, text: shareText });
+        alert('Photo could not be shared directly. Please attach it manually in your messaging app.');
+        return;
+      } catch(e) {}
+    }
+    // Fallback 2: copy text to clipboard + download photo
+    try { await navigator.clipboard.writeText(shareText); } catch(e) {}
+    const url = URL.createObjectURL(file);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = file.name || 'odiya-location.jpg';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    alert('Location copied to clipboard. Photo saved. Please attach both in your message.');
+  } catch (err) {
+    if (err && err.name !== 'AbortError') {
+      console.error('Photo share failed:', err);
+      alert('Could not share photo: ' + (err.message || err));
+    }
+  }
 }
 
 setLang('ko');
