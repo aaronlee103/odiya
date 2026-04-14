@@ -10,7 +10,7 @@
         gtag('config', 'G-GDX0FTXGWY');
    </script>
      <!-- Security headers -->
-     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; img-src 'self' data: https://*.basemaps.cartocdn.com https://www.google-analytics.com; connect-src 'self' https://nominatim.openstreetmap.org https://www.google-analytics.com https://www.googletagmanager.com https://region1.google-analytics.com; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self';">
+     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; img-src 'self' data: https://*.basemaps.cartocdn.com https://www.google-analytics.com; connect-src 'self' https://nominatim.openstreetmap.org https://overpass-api.de https://www.google-analytics.com https://www.googletagmanager.com https://region1.google-analytics.com; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self';">
      <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
@@ -910,6 +910,7 @@ function getLocation() {
       spinner.style.display = 'none';
       btnText.textContent = i18n[currentLang].findMe;
 
+      window.lastPosition = pos;
       currentLat = pos.coords.latitude;
       currentLng = pos.coords.longitude;
       const accuracy = pos.coords.accuracy;
@@ -985,7 +986,7 @@ async function reverseGeocode(lat, lng) {
   }
 }
 
-function generateScript(lat, lng, data) {
+async function generateScript(lat, lng, data) {
   const a = data.address || {};
   const road = a.road || a.pedestrian || a.footway || '';
   const num = a.house_number || '';
@@ -999,7 +1000,13 @@ function generateScript(lat, lng, data) {
   if (city) parts.push(city);
   if (state) parts.push(state);
   if (country) parts.push(country);
-  const loc = parts.join(', ');
+  let loc = parts.join(', ');
+  try {
+    if (window.OdiyaLocation && window.lastPosition) {
+      const enhanced = await window.OdiyaLocation.describe({ position: window.lastPosition, nominatim: data, lang: (typeof getLocalLanguage==='function'?getLocalLanguage():'en') });
+      if (enhanced) loc = enhanced;
+    }
+  } catch(e) {}
 
   // Determine local language for the script
   const localLang = getLocalLanguage();
@@ -1322,5 +1329,6 @@ if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').catch(() => {});
 }
 </script>
+<script src="enhanced-location.js" defer></script>
 </body>
 </html>
