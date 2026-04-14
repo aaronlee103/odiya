@@ -495,6 +495,17 @@
     <button class="lang-btn" onclick="setLang('es')">ES</button>
   </div>
 
+  
+  <div id="parkingBanner" style="display:none;background:#fff8e1;border:1px solid #ffc107;border-radius:10px;padding:12px;margin:0 0 12px 0;cursor:pointer" onclick="navigateToParking()">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:600;color:#5d4037">🖧 내 차 위치</div>
+        <div id="parkingInfo" style="font-size:0.8em;color:#795548;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
+      </div>
+      <button onclick="event.stopPropagation();clearParkingLocation()" aria-label="clear" style="background:transparent;border:none;color:#795548;font-size:1.3em;cursor:pointer;padding:4px 8px">✕</button>
+    </div>
+  </div>
+
   <button class="locate-btn" id="locateBtn" onclick="getLocation()">
     <span class="spinner" id="spinner"></span>
     <span id="locateBtnText" data-i18n="findMe">내 위치 찾기</span>
@@ -528,6 +539,10 @@
         <span data-i18n="photo">사진</span>
       </button>
       <input type="file" id="photoInput" accept="image/*" capture="environment" style="display:none" onchange="handlePhotoSelected(event)">
+      <button class="act-btn" onclick="saveParkingLocation()" id="parkBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M10 8h3a2.5 2.5 0 010 5h-3V8zm0 5v4"/></svg>
+        <span>🖧 주차</span>
+      </button>
       <button class="act-btn" onclick="speakEnglish()">
         <svg viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 010 7.07"/></svg>
         <span data-i18n="speak">읽기</span>
@@ -1421,6 +1436,59 @@ setLang('ko');
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').catch(() => {});
 }
+
+
+function saveParkingLocation() {
+  if (!navigator.geolocation) { alert("위치를 가져올 수 없습니다"); return; }
+  const btn = document.getElementById("parkBtn");
+  if (btn) btn.disabled = true;
+  navigator.geolocation.getCurrentPosition(function(pos) {
+    const data = { lat: pos.coords.latitude, lng: pos.coords.longitude, acc: pos.coords.accuracy, ts: Date.now() };
+    try { localStorage.setItem("odiya_parking", JSON.stringify(data)); } catch(e) {}
+    if (btn) btn.disabled = false;
+    showParkingBanner();
+    alert("🖧 주차 위치, 저장.");
+  }, function(err) {
+    if (btn) btn.disabled = false;
+    alert("위치 실패: " + err.message);
+  }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
+}
+function loadParkingLocation() {
+  try { return JSON.parse(localStorage.getItem("odiya_parking") || "null"); } catch(e) { return null; }
+}
+function clearParkingLocation() {
+  if (!confirm("저장.븬 주차 위치를 삭제할까요?")) return;
+  try { localStorage.removeItem("odiya_parking"); } catch(e) {}
+  hideParkingBanner();
+}
+function showParkingBanner() {
+  const d = loadParkingLocation();
+  const b = document.getElementById("parkingBanner");
+  if (!b) return;
+  if (!d) { b.style.display = "none"; return; }
+  b.style.display = "block";
+  const info = document.getElementById("parkingInfo");
+  if (info) {
+    const ago = Math.floor((Date.now() - d.ts) / 60000);
+    let when;
+    if (ago < 1) when = "now";
+    else if (ago < 60) when = ago + "m ago";
+    else if (ago < 1440) when = Math.floor(ago/60) + "h ago";
+    else when = Math.floor(ago/1440) + "d ago";
+    info.textContent = when + " \u00b7 " + d.lat.toFixed(5) + ", " + d.lng.toFixed(5);
+  }
+}
+function hideParkingBanner() {
+  const b = document.getElementById("parkingBanner");
+  if (b) b.style.display = "none";
+}
+function navigateToParking() {
+  const d = loadParkingLocation();
+  if (!d) return;
+  const url = "ht" + "tps://" + "www.google.com/maps/dir/?api=1&destination=" + d.lat + "," + d.lng + "&travelmode=walking";
+  window.open(url, "_blank");
+}
+window.addEventListener("load", function(){ try { showParkingBanner(); } catch(e){} });
 </script>
 <script src="enhanced-location.js" defer></script>
 <div id="photoSharePrompt" style="display:none; position:fixed; left:0; right:0; bottom:0; background:#111; color:#fff; padding:20px 16px calc(20px + env(safe-area-inset-bottom)); z-index:9999; flex-direction:column; align-items:center; gap:14px; box-shadow:0 -4px 20px rgba(0,0,0,0.3);">
