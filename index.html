@@ -1012,6 +1012,7 @@ async function generateScript(lat, lng, data) {
       if (enhanced) loc = enhanced;
     }
   } catch(e) {}
+  window.lastLocationText = loc;
 
   // Determine local language for the script
   const localLang = getLocalLanguage();
@@ -1368,8 +1369,7 @@ async function doPhotoShareNow() {
   // This runs inside a fresh user gesture (the tap on "Share now" button),
   // which iOS Safari requires for navigator.share() with files.
   try {
-    const scriptEl = document.getElementById('englishScript');
-    const locationText = scriptEl ? scriptEl.innerText.trim() : '';
+    const locationText = window.lastLocationText || '';
     const lat = (typeof currentLat !== 'undefined') ? currentLat : null;
     const lng = (typeof currentLng !== 'undefined') ? currentLng : null;
     let mapLink = '';
