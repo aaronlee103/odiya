@@ -662,7 +662,7 @@ const i18n = {
     scriptLabel: "읽어주세요",
     readTo: "에 읽어주세요",
     copy: "복사",
-    share: "공유", photo: "사진",
+    share: "공유", photo: "사진", photoReady: "사진 준비 완료 — 아래 버튼을 눌러 위치와 함께 공유하세요", shareNow: "지금 공유하기", cancel: "취소",
     openMap: "지도",
     speak: "읽기",
     callText: "전화하기",
@@ -692,7 +692,7 @@ const i18n = {
     scriptLabel: "Read this to",
     readTo: "",
     copy: "Copy",
-    share: "Share", photo: "Photo",
+    share: "Share", photo: "Photo", photoReady: "Photo ready — tap below to share with your location", shareNow: "Share now", cancel: "Cancel",
     openMap: "Map",
     speak: "Speak",
     callText: "Call",
@@ -752,7 +752,7 @@ const i18n = {
     scriptLabel: "",
     readTo: "に読んでください",
     copy: "コピー",
-    share: "共有", photo: "写真",
+    share: "共有", photo: "写真", photoReady: "写真の準備ができました — 下のボタンをタップして位置情報と共有", shareNow: "今すぐ共有", cancel: "キャンセル",
     openMap: "地図",
     speak: "読む",
     callText: "に電話",
@@ -782,7 +782,7 @@ const i18n = {
     scriptLabel: "Lea esto al",
     readTo: "",
     copy: "Copiar",
-    share: "Compartir", photo: "Foto",
+    share: "Compartir", photo: "Foto", photoReady: "Foto lista — toca abajo para compartir con tu ubicación", shareNow: "Compartir ahora", cancel: "Cancelar",
     openMap: "Mapa",
     speak: "Leer",
     callText: "Llamar",
@@ -1328,7 +1328,9 @@ function closeStory() {
 }
 
 
-// --- Photo + Location share ---
+// --- Photo + Location share (two-step for iOS Safari) ---
+let _pendingPhotoFile = null;
+
 function triggerPhotoShare() {
   const input = document.getElementById('photoInput');
   if (!input) return;
@@ -1336,11 +1338,36 @@ function triggerPhotoShare() {
   input.click();
 }
 
-async function handlePhotoSelected(event) {
+function handlePhotoSelected(event) {
   const file = event.target.files && event.target.files[0];
   if (!file) return;
+  _pendingPhotoFile = file;
+  // Show preview thumbnail
+  const thumb = document.getElementById('photoThumb');
+  if (thumb) {
+    if (thumb._url) URL.revokeObjectURL(thumb._url);
+    const url = URL.createObjectURL(file);
+    thumb._url = url;
+    thumb.src = url;
+  }
+  const prompt = document.getElementById('photoSharePrompt');
+  if (prompt) prompt.style.display = 'flex';
+}
+
+function cancelPhotoShare() {
+  _pendingPhotoFile = null;
+  const thumb = document.getElementById('photoThumb');
+  if (thumb && thumb._url) { URL.revokeObjectURL(thumb._url); thumb._url = null; thumb.src = ''; }
+  const prompt = document.getElementById('photoSharePrompt');
+  if (prompt) prompt.style.display = 'none';
+}
+
+async function doPhotoShareNow() {
+  const file = _pendingPhotoFile;
+  if (!file) return;
+  // This runs inside a fresh user gesture (the tap on "Share now" button),
+  // which iOS Safari requires for navigator.share() with files.
   try {
-    // Build location text from existing script content
     const scriptEl = document.getElementById('englishScript');
     const locationText = scriptEl ? scriptEl.innerText.trim() : '';
     const lat = (typeof currentLat !== 'undefined') ? currentLat : null;
@@ -1357,17 +1384,19 @@ async function handlePhotoSelected(event) {
     };
     if (navigator.canShare && navigator.canShare(shareData) && navigator.share) {
       await navigator.share(shareData);
+      cancelPhotoShare();
       return;
     }
-    // Fallback 1: share text only via Web Share API
+    // Fallback: text only
     if (navigator.share) {
       try {
         await navigator.share({ title: shareData.title, text: shareText });
-        alert('Photo could not be shared directly. Please attach it manually in your messaging app.');
+        alert('Photo could not be shared directly. Please attach it manually.');
+        cancelPhotoShare();
         return;
       } catch(e) {}
     }
-    // Fallback 2: copy text to clipboard + download photo
+    // Last resort: copy text + download photo
     try { await navigator.clipboard.writeText(shareText); } catch(e) {}
     const url = URL.createObjectURL(file);
     const a = document.createElement('a');
@@ -1377,15 +1406,15 @@ async function handlePhotoSelected(event) {
     a.click();
     document.body.removeChild(a);
     setTimeout(() => URL.revokeObjectURL(url), 1000);
-    alert('Location copied to clipboard. Photo saved. Please attach both in your message.');
+    alert('Location copied. Photo saved. Please attach both in your message.');
+    cancelPhotoShare();
   } catch (err) {
     if (err && err.name !== 'AbortError') {
       console.error('Photo share failed:', err);
-      alert('Could not share photo: ' + (err.message || err));
+      alert('Could not share: ' + (err.message || err));
     }
   }
 }
-
 setLang('ko');
 
 // Register Service Worker for PWA
@@ -1394,5 +1423,11 @@ if ('serviceWorker' in navigator) {
 }
 </script>
 <script src="enhanced-location.js" defer></script>
+<div id="photoSharePrompt" style="display:none; position:fixed; left:0; right:0; bottom:0; background:#111; color:#fff; padding:20px 16px calc(20px + env(safe-area-inset-bottom)); z-index:9999; flex-direction:column; align-items:center; gap:14px; box-shadow:0 -4px 20px rgba(0,0,0,0.3);">
+  <img id="photoThumb" alt="preview" style="max-width:200px; max-height:200px; border-radius:8px; object-fit:cover;">
+  <div style="text-align:center; font-size:14px; opacity:0.9;" data-i18n="photoReady">사진 준비 완료 — 아래 버튼을 눌러 위치와 함께 공유하세요</div>
+  <button onclick="doPhotoShareNow()" style="background:#fff; color:#111; border:none; padding:16px 32px; border-radius:10px; font-size:16px; font-weight:700; width:100%; max-width:320px; cursor:pointer;" data-i18n="shareNow">지금 공유하기</button>
+  <button onclick="cancelPhotoShare()" style="background:transparent; color:#fff; border:1px solid #555; padding:10px 24px; border-radius:8px; font-size:14px; cursor:pointer;" data-i18n="cancel">취소</button>
+</div>
 </body>
 </html>
