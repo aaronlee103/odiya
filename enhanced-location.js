@@ -414,13 +414,13 @@
     const q = `
       [out:json][timeout:5];
       (
-        node(around:500,${lat},${lon})["brand"];
+        node(around:800,${lat},${lon})["brand"];
         node(around:800,${lat},${lon})["name"]["amenity"~"fuel|hospital|police|fire_station|school|bank|pharmacy|car_rental"];
         node(around:800,${lat},${lon})["name"]["shop"~"car|supermarket|mall|department_store|car_repair|car_parts"];
         node(around:600,${lat},${lon})["name"]["amenity"~"restaurant|cafe|fast_food"];
         node(around:500,${lat},${lon})["name"]["shop"];
         node(around:500,${lat},${lon})["name"]["amenity"];
-        way(around:500,${lat},${lon})["brand"];
+        way(around:800,${lat},${lon})["brand"];
         way(around:800,${lat},${lon})["name"]["amenity"~"fuel|hospital|police|fire_station|school|bank|pharmacy|car_rental"];
         way(around:800,${lat},${lon})["name"]["shop"~"car|supermarket|mall|department_store|car_repair|car_parts"];
         way(around:500,${lat},${lon})["name"]["shop"];
