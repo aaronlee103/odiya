@@ -419,40 +419,60 @@
   /** Find nearest named business/landmark with distance and direction. */
   async function findNearbyPOI(lat, lon, lang) {
     const q = `
-      [out:json][timeout:4];
+      [out:json][timeout:5];
       (
-        node(around:800,${lat},${lon})["name"]["amenity"~"fuel|hospital|police|fire_station|restaurant|cafe|bank|pharmacy|supermarket|parking"];
-        node(around:800,${lat},${lon})["name"]["shop"];
-        node(around:800,${lat},${lon})["name"]["tourism"~"hotel|museum|attraction"];
-        node(around:800,${lat},${lon})["name"]["leisure"~"park|stadium"];
-        way(around:800,${lat},${lon})["name"]["shop"];
-        way(around:800,${lat},${lon})["name"]["amenity"~"fuel|hospital|police|fire_station|restaurant|cafe|bank|pharmacy|supermarket|parking"];
+        node(around:1000,${lat},${lon})["brand"];
+        node(around:800,${lat},${lon})["name"]["amenity"~"fuel|hospital|police|fire_station|school|bank|pharmacy|car_rental"];
+        node(around:800,${lat},${lon})["name"]["shop"~"car|supermarket|mall|department_store|car_repair|car_parts"];
+        node(around:600,${lat},${lon})["name"]["amenity"~"restaurant|cafe|fast_food"];
+        way(around:1000,${lat},${lon})["brand"];
+        way(around:800,${lat},${lon})["name"]["amenity"~"fuel|hospital|police|fire_station|school|bank|pharmacy|car_rental"];
+        way(around:800,${lat},${lon})["name"]["shop"~"car|supermarket|mall|department_store|car_repair|car_parts"];
       );
-      out center body 10;
+      out center body 15;
     `;
     try {
       const data = await withTimeout(overpass(q), OVERPASS_TIMEOUT_MS);
       if (!data || !data.elements || data.elements.length === 0) return null;
-      let best = null;
-      let bestDist = Infinity;
+      
+      // Score each POI: prefer branded, notable, closer
+      const scored = [];
       for (const e of data.elements) {
         const eLat = e.lat || (e.center && e.center.lat);
         const eLon = e.lon || (e.center && e.center.lon);
-        if (!eLat || !eLon || !e.tags || !e.tags.name) continue;
+        if (!eLat || !eLon || !e.tags) continue;
+        const name = e.tags.brand || e.tags.name;
+        if (!name) continue;
         const d = haversine(lat, lon, eLat, eLon);
-        if (d < bestDist) {
-          bestDist = d;
-          best = {
-            name: e.tags.name,
-            brand: e.tags.brand || null,
-            kind: e.tags.amenity || e.tags.shop || e.tags.tourism || e.tags.leisure || null,
-            distance_m: d,
-            lat: eLat,
-            lon: eLon
-          };
-        }
+        
+        // Scoring: lower = better
+        let score = d; // base: distance in meters
+        
+        // Brand bonus: branded places are more recognizable (-300m advantage)
+        if (e.tags.brand) score -= 300;
+        
+        // Type bonus for highly visible landmarks
+        const amenity = e.tags.amenity || '';
+        const shop = e.tags.shop || '';
+        if (amenity === 'hospital' || amenity === 'police' || amenity === 'fire_station') score -= 400;
+        else if (amenity === 'school' || amenity === 'fuel') score -= 200;
+        else if (shop === 'car' || shop === 'supermarket' || shop === 'mall' || shop === 'department_store') score -= 250;
+        else if (amenity === 'bank' || amenity === 'pharmacy') score -= 100;
+        
+        scored.push({
+          name: name,
+          kind: amenity || shop || e.tags.tourism || e.tags.leisure || null,
+          distance_m: d,
+          lat: eLat,
+          lon: eLon,
+          score: score
+        });
       }
-      if (!best) return null;
+      
+      if (scored.length === 0) return null;
+      scored.sort((a, b) => a.score - b.score);
+      const best = scored[0];
+      
       const dir = bearingToCardinal(bearing(lat, lon, best.lat, best.lon));
       const dist = fmtDistance(best.distance_m, lang || 'en');
       best.direction = dir;
