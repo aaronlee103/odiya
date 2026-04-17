@@ -1177,10 +1177,10 @@ function buildScriptLines(loc, lat, lng, localLang) {
   let html, speech, shareText;
 
   if (loc) {
+    const locHtml = loc.replace(/\n/g, '<br>');
     html = `<span class="hl">${t.help}</span><br><br>` +
-      `${t.locAt}<br><span class="hl">${loc}</span><br><br>` +
-      `${t.gps}<br>${t.latLabel} <span class="hl">${latStr}</span><br>` +
-      `${t.lngLabel} <span class="hl">${lngStr}</span>`;
+      `${t.locAt}<br><span class="hl">${locHtml}</span><br><br>` +
+      `<span style="font-size:0.75em;opacity:0.6">${t.gps} ${latStr}, ${lngStr}</span>`
 
     // Share text: location only, no "I need help"
     shareText = `${loc}\nLatitude ${latStr}, Longitude ${lngStr}`;
