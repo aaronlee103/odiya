@@ -1457,7 +1457,7 @@ function loadParkingLocation() {
   try { return JSON.parse(localStorage.getItem("odiya_parking") || "null"); } catch(e) { return null; }
 }
 function clearParkingLocation() {
-  if (!confirm("저장.븬 주차 위치를 삭제할까요?")) return;
+  if (!confirm("저장된 주차 위치를 삭제할까요?")) return;
   try { localStorage.removeItem("odiya_parking"); } catch(e) {}
   hideParkingBanner();
 }
