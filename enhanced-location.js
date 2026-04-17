@@ -1,5 +1,5 @@
 /* ======================================================================
- * ODIYA — Enhanced Location Description (dispatcher-friendly)
+ * ODIYA â Enhanced Location Description (dispatcher-friendly)
  * -------------------------------------------------------------------------
  * Goal: turn raw GPS coordinates + reverse-geocoded street addresses into
  * natural-language descriptions a 911 dispatcher can understand over the
@@ -10,13 +10,13 @@
  *
  *   // Then from your existing code:
  *   const text = await OdiyaLocation.describe({
- *     position,            // GeolocationPosition
- *     nominatim,           // existing reverse-geocode JSON (optional)
+ *     position,          // GeolocationPosition
+ *     nominatim,         // existing reverse-geocode JSON (optional)
  *     lang: 'en' | 'ko' | ...
  *   });
  *
  * Depends on:
- *   - Overpass API (https://overpass-api.de) — free, no key required.
+ *   - Overpass API (https://overpass-api.de) â free, no key required.
  *   - Nominatim (already used by ODIYA) for the base address.
  *
  * All network calls are wrapped in timeouts so a slow Overpass response
@@ -29,10 +29,10 @@
 
   // ---------- config ----------
   const OVERPASS_ENDPOINT = 'https://overpass-api.de/api/interpreter';
-  const OVERPASS_TIMEOUT_MS = 4000;           // hard cap for the call
-  const OVERPASS_SEARCH_RADIUS_M = 3000;      // 3 km around the user
-  const POOR_ACCURACY_M = 100;                // threshold for "low accuracy"
-  const HEADING_HISTORY_MAX = 5;              // samples kept for bearing calc
+  const OVERPASS_TIMEOUT_MS = 4000;          // hard cap for the call
+  const OVERPASS_SEARCH_RADIUS_M = 3000;     // 3 km around the user
+  const POOR_ACCURACY_M = 100;               // threshold for "low accuracy"
+  const HEADING_HISTORY_MAX = 5;             // samples kept for bearing calc
 
   // ---------- heading history (for direction of travel) ----------
   const headingHistory = [];
@@ -43,8 +43,8 @@
       lat: position.coords.latitude,
       lon: position.coords.longitude,
       heading: position.coords.heading, // may be null on stationary / iOS web
-      speed: position.coords.speed,     // m/s or null
-      t: position.timestamp || Date.now()
+      speed:   position.coords.speed,    // m/s or null
+      t:       position.timestamp || Date.now()
     });
     while (headingHistory.length > HEADING_HISTORY_MAX) headingHistory.shift();
   }
@@ -79,18 +79,18 @@
     const R = 6371000;
     const dLat = toRad(lat2 - lat1);
     const dLon = toRad(lon2 - lon1);
-    const a = Math.sin(dLat / 2) ** 2
-            + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2))
-            * Math.sin(dLon / 2) ** 2;
+    const a = Math.sin(dLat / 2) ** 2 +
+              Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+              Math.sin(dLon / 2) ** 2;
     return 2 * R * Math.asin(Math.sqrt(a));
   }
 
   function bearing(lat1, lon1, lat2, lon2) {
-    const φ1 = toRad(lat1), φ2 = toRad(lat2);
-    const Δλ = toRad(lon2 - lon1);
-    const y = Math.sin(Δλ) * Math.cos(φ2);
-    const x = Math.cos(φ1) * Math.sin(φ2)
-            - Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
+    const p1 = toRad(lat1), p2 = toRad(lat2);
+    const dL = toRad(lon2 - lon1);
+    const y = Math.sin(dL) * Math.cos(p2);
+    const x = Math.cos(p1) * Math.sin(p2) -
+              Math.sin(p1) * Math.cos(p2) * Math.cos(dL);
     return (toDeg(Math.atan2(y, x)) + 360) % 360;
   }
 
@@ -123,7 +123,7 @@
 
   /**
    * Find the nearest motorway way the user is on, plus nearby motorway
-   * junction (exit) nodes. Returns { road, junctions[], road_ref, road_name }
+   * junction (exit) nodes.  Returns { road, junctions[], road_ref, road_name }
    * or null if none found within radius.
    */
   async function findHighwayContext(lat, lon) {
@@ -139,7 +139,7 @@
     `;
     try {
       const data = await overpass(q);
-      const ways = (data.elements || []).filter(e => e.type === 'way');
+      const ways      = (data.elements || []).filter(e => e.type === 'way');
       const junctions = (data.elements || []).filter(
         e => e.type === 'node' && e.tags && e.tags.highway === 'motorway_junction'
       );
@@ -157,9 +157,10 @@
       // Collect junctions with distances.
       const enrichedJunctions = junctions
         .map(j => ({
-          ref: (j.tags && (j.tags.ref || j.tags.name)) || null,
+          ref:  (j.tags && (j.tags.ref || j.tags.name)) || null,
           name: (j.tags && j.tags.name) || null,
-          lat: j.lat, lon: j.lon,
+          lat:  j.lat,
+          lon:  j.lon,
           distance_m: haversine(lat, lon, j.lat, j.lon)
         }))
         .filter(j => j.ref || j.name)
@@ -167,15 +168,13 @@
 
       const t = bestWay.tags || {};
       return {
-        road_ref: t.ref || null,         // e.g. "I 95", "US 101"
-        road_name: t.name || null,       // e.g. "New Jersey Turnpike"
-        road_type: t.highway || null,    // motorway / trunk / ...
+        road_ref:  t.ref  || null,            // e.g. "I 95", "US 101"
+        road_name: t.name || null,            // e.g. "New Jersey Turnpike"
+        road_type: t.highway || null,         // motorway / trunk / ...
         distance_to_road_m: bestDist,
         junctions: enrichedJunctions.slice(0, 3)
       };
-    } catch (e) {
-      return null;
-    }
+    } catch (e) { return null; }
   }
 
   /** Find the nearest notable landmark (for low-accuracy fallback). */
@@ -200,9 +199,7 @@
         }))
         .sort((a, b) => a.distance_m - b.distance_m);
       return els[0] || null;
-    } catch (e) {
-      return null;
-    }
+    } catch (e) { return null; }
   }
 
   // ---------- language templates ----------
@@ -210,7 +207,7 @@
   const TEMPLATES = {
     en: {
       highway(c) {
-        const dir = c.bearing_cardinal ? c.bearing_cardinal + 'bound' : '';
+        const dir  = c.bearing_cardinal ? c.bearing_cardinal + 'bound' : '';
         const road = c.road_label;
         const parts = [];
         parts.push(`I'm on ${road}${dir ? ' ' + dir : ''}.`);
@@ -234,32 +231,29 @@
       },
       lowAccuracy(c) {
         const bits = [];
-        if (c.landmark)
-          bits.push(`I'm somewhere near ${c.landmark.name}`);
-        else if (c.city)
-          bits.push(`I'm somewhere in ${c.city}`);
-        else
-          bits.push(`I'm at approximately ${c.lat.toFixed(4)}, ${c.lon.toFixed(4)}`);
+        if (c.landmark) bits.push(`I'm somewhere near ${c.landmark.name}`);
+        else if (c.city)  bits.push(`I'm somewhere in ${c.city}`);
+        else bits.push(`I'm at approximately ${c.lat.toFixed(4)}, ${c.lon.toFixed(4)}`);
         bits.push(`My GPS accuracy is about ${Math.round(c.accuracy_m)} meters, so this is approximate.`);
         return bits.join('. ') + '.';
       }
     },
     ko: {
       highway(c) {
-        const dirMap = { north: '북쪽', south: '남쪽', east: '동쪽', west: '서쪽',
-                         northeast: '북동쪽', northwest: '북서쪽',
-                         southeast: '남동쪽', southwest: '남서쪽' };
-        const dir = c.bearing_cardinal ? dirMap[c.bearing_cardinal] + '으로 ' : '';
+        const dirMap = { north:'\uBD81\uCABD', south:'\uB0A8\uCABD', east:'\uB3D9\uCABD', west:'\uC11C\uCABD',
+                         northeast:'\uBD81\uB3D9\uCABD', northwest:'\uBD81\uC11C\uCABD',
+                         southeast:'\uB0A8\uB3D9\uCABD', southwest:'\uB0A8\uC11C\uCABD' };
+        const dir  = c.bearing_cardinal ? dirMap[c.bearing_cardinal] + '\uC73C\uB85C ' : '';
         const road = c.road_label;
-        const parts = [`${road}에서 ${dir}이동 중입니다.`];
+        const parts = [`${road}\uC5D0\uC11C ${dir}\uC774\uB3D9 \uC911\uC785\uB2C8\uB2E4.`];
         if (c.next_exit) {
           const dist = fmtDistance(c.next_exit.distance_m, 'ko');
-          parts.push(`${c.next_exit.ref || c.next_exit.name} 출구 약 ${dist} 전입니다.`);
+          parts.push(`${c.next_exit.ref || c.next_exit.name} \uCD9C\uAD6C \uC57D ${dist} \uC804\uC785\uB2C8\uB2E4.`);
         } else if (c.prev_exit) {
           const dist = fmtDistance(c.prev_exit.distance_m, 'ko');
-          parts.push(`${c.prev_exit.ref || c.prev_exit.name} 출구에서 약 ${dist} 지났습니다.`);
+          parts.push(`${c.prev_exit.ref || c.prev_exit.name} \uCD9C\uAD6C\uC5D0\uC11C \uC57D ${dist} \uC9C0\uB0AC\uC2B5\uB2C8\uB2E4.`);
         }
-        if (c.city) parts.push(`${c.city} 근처입니다.`);
+        if (c.city) parts.push(`${c.city} \uADFC\uCC98\uC785\uB2C8\uB2E4.`);
         return parts.join(' ');
       },
       street(c) {
@@ -267,23 +261,23 @@
         if (c.road) bits.push(c.house_number ? `${c.road} ${c.house_number}` : c.road);
         if (c.city) bits.push(c.city);
         if (c.state) bits.push(c.state);
-        return `${bits.join(', ')}에 있습니다.`;
+        return `${bits.join(', ')}\uC5D0 \uC788\uC2B5\uB2C8\uB2E4.`;
       },
       lowAccuracy(c) {
         const parts = [];
-        if (c.landmark) parts.push(`${c.landmark.name} 근처에 있습니다`);
-        else if (c.city) parts.push(`${c.city} 어딘가에 있습니다`);
-        else parts.push(`대략 ${c.lat.toFixed(4)}, ${c.lon.toFixed(4)} 위치입니다`);
-        parts.push(`GPS 오차가 약 ${Math.round(c.accuracy_m)}미터라 정확하지 않습니다.`);
+        if (c.landmark) parts.push(`${c.landmark.name} \uADFC\uCC98\uC5D0 \uC788\uC2B5\uB2C8\uB2E4`);
+        else if (c.city) parts.push(`${c.city} \uC5B4\uB518\uAC00\uC5D0 \uC788\uC2B5\uB2C8\uB2E4`);
+        else parts.push(`\uB300\uB7B5 ${c.lat.toFixed(4)}, ${c.lon.toFixed(4)} \uC704\uCE58\uC785\uB2C8\uB2E4`);
+        parts.push(`GPS \uC624\uCC28\uAC00 \uC57D ${Math.round(c.accuracy_m)}\uBBF8\uD130\uB77C \uC815\uD655\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.`);
         return parts.join('. ') + '.';
       }
     },
     es: {
       highway(c) {
-        const dirMap = { north: 'dirección norte', south: 'dirección sur',
-                         east: 'dirección este', west: 'dirección oeste',
-                         northeast: 'dirección noreste', northwest: 'dirección noroeste',
-                         southeast: 'dirección sureste', southwest: 'dirección suroeste' };
+        const dirMap = { north:'direcci\u00F3n norte', south:'direcci\u00F3n sur',
+                         east:'direcci\u00F3n este', west:'direcci\u00F3n oeste',
+                         northeast:'direcci\u00F3n noreste', northwest:'direcci\u00F3n noroeste',
+                         southeast:'direcci\u00F3n sureste', southwest:'direcci\u00F3n suroeste' };
         const dir = c.bearing_cardinal ? ' ' + dirMap[c.bearing_cardinal] : '';
         const parts = [`Estoy en ${c.road_label}${dir}.`];
         if (c.next_exit) {
@@ -301,10 +295,10 @@
         return `Estoy en ${bits.join(', ')}.`;
       },
       lowAccuracy(c) {
-        const landmark = c.landmark ? `cerca de ${c.landmark.name}` :
-                         (c.city ? `en algún lugar de ${c.city}` :
-                          `aproximadamente en ${c.lat.toFixed(4)}, ${c.lon.toFixed(4)}`);
-        return `Estoy ${landmark}. Mi GPS tiene una precisión de unos ${Math.round(c.accuracy_m)} metros, así que es aproximado.`;
+        const landmark = c.landmark
+          ? `cerca de ${c.landmark.name}`
+          : (c.city ? `en alg\u00FAn lugar de ${c.city}` : `aproximadamente en ${c.lat.toFixed(4)}, ${c.lon.toFixed(4)}`);
+        return `Estoy ${landmark}. Mi GPS tiene una precisi\u00F3n de unos ${Math.round(c.accuracy_m)} metros, as\u00ED que es aproximado.`;
       }
     }
   };
@@ -316,13 +310,11 @@
       return Math.round(m * 3.281) + ' feet';
     }
     // metric default
-    if (m >= 1000) return (m / 1000).toFixed(1) + (lang === 'ko' ? '킬로미터' : ' km');
-    return Math.round(m) + (lang === 'ko' ? '미터' : ' m');
+    if (m >= 1000) return (m / 1000).toFixed(1) + (lang === 'ko' ? '\uD0AC\uB85C\uBBF8\uD130' : ' km');
+    return Math.round(m) + (lang === 'ko' ? '\uBBF8\uD130' : ' m');
   }
 
-  function pickTemplate(lang) {
-    return TEMPLATES[lang] || TEMPLATES.en;
-  }
+  function pickTemplate(lang) { return TEMPLATES[lang] || TEMPLATES.en; }
 
   // ---------- main entrypoint ----------
   /**
@@ -331,8 +323,8 @@
    *
    * @param {object} opts
    * @param {GeolocationPosition} opts.position
-   * @param {object} [opts.nominatim]   existing reverse-geocode JSON
-   * @param {string} [opts.lang='en']
+   * @param {object}              [opts.nominatim] existing reverse-geocode JSON
+   * @param {string}              [opts.lang='en']
    * @returns {Promise<string>}
    */
   async function describe(opts) {
@@ -340,18 +332,18 @@
     if (!position || !position.coords) return '';
 
     pushHeadingSample(position);
-    const lat = position.coords.latitude;
-    const lon = position.coords.longitude;
+
+    const lat      = position.coords.latitude;
+    const lon      = position.coords.longitude;
     const accuracy = position.coords.accuracy || 0;
-    const addr = (nominatim && nominatim.address) || {};
-    const T = pickTemplate(lang);
+    const addr     = (nominatim && nominatim.address) || {};
+    const T        = pickTemplate(lang);
 
     // --- Case A: accuracy is poor -> low-accuracy fallback w/ landmark ---
     if (accuracy > POOR_ACCURACY_M) {
       const landmark = await findNearestLandmark(lat, lon);
       return T.lowAccuracy({
-        lat, lon,
-        accuracy_m: accuracy,
+        lat, lon, accuracy_m: accuracy,
         city: addr.city || addr.town || addr.village,
         landmark
       });
@@ -362,10 +354,10 @@
     // "I-", "US-", "Highway", or address.road_type === "motorway".
     const roadFromNominatim = addr.road || '';
     const looksLikeHighway =
-      /^(I[-\s]?\d|US[-\s]?\d|Hwy|Highway|Interstate|Motorway|고속도로|Autopista|Autoroute)/i
-      .test(roadFromNominatim)
-      || (nominatim && nominatim.class === 'highway'
-          && /motorway|trunk/i.test(nominatim.type || ''));
+      /^(I[-\s]?\d|US[-\s]?\d|Hwy|Highway|Interstate|Motorway|\uACE0\uC18D\uB3C4\uB85C|Autopista|Autoroute)/i
+        .test(roadFromNominatim) ||
+      (nominatim && nominatim.class === 'highway' &&
+       /motorway|trunk/i.test(nominatim.type || ''));
 
     let highwayCtx = null;
     if (looksLikeHighway) {
@@ -374,7 +366,7 @@
 
     if (highwayCtx) {
       // Figure out next/prev exit relative to direction of travel.
-      const brg = estimateBearing();
+      const brg     = estimateBearing();
       const cardinal = bearingToCardinal(brg);
       let nextExit = null, prevExit = null;
       if (brg != null && highwayCtx.junctions.length) {
@@ -393,8 +385,8 @@
 
       const roadLabel = highwayCtx.road_ref
         ? (highwayCtx.road_name
-           ? `${highwayCtx.road_ref} (${highwayCtx.road_name})`
-           : highwayCtx.road_ref)
+            ? `${highwayCtx.road_ref} (${highwayCtx.road_name})`
+            : highwayCtx.road_ref)
         : (highwayCtx.road_name || roadFromNominatim || 'the highway');
 
       return T.highway({
@@ -409,14 +401,15 @@
     // --- Case C: normal street address ---
     return T.street({
       house_number: addr.house_number,
-      road: addr.road,
-      city: addr.city || addr.town || addr.village,
+      road:  addr.road,
+      city:  addr.city || addr.town || addr.village,
       state: addr.state
     });
   }
 
-
-  /** Find nearest named business/landmark with distance and direction. */
+  /** Find nearest named business/landmark with distance and direction.
+   *  Queries both specific notable types AND broad fallback (all shops/amenities)
+   *  then uses a scoring system to prefer branded/notable places. */
   async function findNearbyPOI(lat, lon, lang) {
     const q = `
       [out:json][timeout:5];
@@ -425,16 +418,20 @@
         node(around:800,${lat},${lon})["name"]["amenity"~"fuel|hospital|police|fire_station|school|bank|pharmacy|car_rental"];
         node(around:800,${lat},${lon})["name"]["shop"~"car|supermarket|mall|department_store|car_repair|car_parts"];
         node(around:600,${lat},${lon})["name"]["amenity"~"restaurant|cafe|fast_food"];
+        node(around:500,${lat},${lon})["name"]["shop"];
+        node(around:500,${lat},${lon})["name"]["amenity"];
         way(around:1000,${lat},${lon})["brand"];
         way(around:800,${lat},${lon})["name"]["amenity"~"fuel|hospital|police|fire_station|school|bank|pharmacy|car_rental"];
         way(around:800,${lat},${lon})["name"]["shop"~"car|supermarket|mall|department_store|car_repair|car_parts"];
+        way(around:500,${lat},${lon})["name"]["shop"];
+        way(around:500,${lat},${lon})["name"]["amenity"];
       );
-      out center body 15;
+      out center body 25;
     `;
     try {
       const data = await withTimeout(overpass(q), OVERPASS_TIMEOUT_MS);
       if (!data || !data.elements || data.elements.length === 0) return null;
-      
+
       // Score each POI: prefer branded, notable, closer
       const scored = [];
       for (const e of data.elements) {
@@ -443,22 +440,23 @@
         if (!eLat || !eLon || !e.tags) continue;
         const name = e.tags.brand || e.tags.name;
         if (!name) continue;
+
         const d = haversine(lat, lon, eLat, eLon);
-        
+
         // Scoring: lower = better
         let score = d; // base: distance in meters
-        
+
         // Brand bonus: branded places are more recognizable (-300m advantage)
         if (e.tags.brand) score -= 300;
-        
+
         // Type bonus for highly visible landmarks
         const amenity = e.tags.amenity || '';
         const shop = e.tags.shop || '';
         if (amenity === 'hospital' || amenity === 'police' || amenity === 'fire_station') score -= 400;
-        else if (amenity === 'school' || amenity === 'fuel') score -= 200;
         else if (shop === 'car' || shop === 'supermarket' || shop === 'mall' || shop === 'department_store') score -= 250;
+        else if (amenity === 'school' || amenity === 'fuel') score -= 200;
         else if (amenity === 'bank' || amenity === 'pharmacy') score -= 100;
-        
+
         scored.push({
           name: name,
           kind: amenity || shop || e.tags.tourism || e.tags.leisure || null,
@@ -468,11 +466,11 @@
           score: score
         });
       }
-      
+
       if (scored.length === 0) return null;
       scored.sort((a, b) => a.score - b.score);
       const best = scored[0];
-      
+
       const dir = bearingToCardinal(bearing(lat, lon, best.lat, best.lon));
       const dist = fmtDistance(best.distance_m, lang || 'en');
       best.direction = dir;
@@ -488,13 +486,7 @@
     describe,
     findNearbyPOI,
     // exposed for testing / reuse:
-    _internal: {
-      findHighwayContext,
-      findNearestLandmark,
-      estimateBearing,
-      pushHeadingSample,
-      bearing,
-      haversine
-    }
+    _internal: { findHighwayContext, findNearestLandmark, estimateBearing, pushHeadingSample, bearing, haversine }
   };
+
 })(typeof window !== 'undefined' ? window : globalThis);
