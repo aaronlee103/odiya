@@ -494,7 +494,19 @@
     color: #888;
     margin-top: 8px;
   }
-  </style>
+  
+    .install-btn { background: none; border: 1px solid #ccc; border-radius: 16px; padding: 4px 12px; font-size: 13px; color: #555; cursor: pointer; font-family: inherit; }
+    .install-btn:active { background: #f0f0f0; }
+    .install-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 9999; justify-content: center; align-items: center; }
+    .install-overlay.show { display: flex; }
+    .install-card { background: #fff; border-radius: 16px; padding: 24px; max-width: 320px; width: 90%; text-align: center; }
+    .install-card h3 { margin: 0 0 12px; font-size: 18px; }
+    .install-card p { margin: 8px 0; font-size: 14px; color: #555; line-height: 1.5; }
+    .install-card .steps { text-align: left; margin: 16px 0; }
+    .install-card .step { display: flex; align-items: center; gap: 10px; margin: 10px 0; font-size: 14px; }
+    .install-card .step-num { background: #111; color: #fff; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+    .install-close { background: #111; color: #fff; border: none; border-radius: 12px; padding: 12px 32px; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 12px; }
+    </style>
 </head>
 <body>
 
@@ -533,7 +545,22 @@
 <div class="container">
   <div class="topbar">
     <div class="logo" onclick="resetToHome()">ODIYA</div>
+    <button class="install-btn" id="installBtn" onclick="showInstallGuide()" style="display:none">Install</button>
     <button class="story-toggle" onclick="openStory()" data-i18n="storyBtn">Story</button>
+  </div>
+
+  <div class="install-overlay" id="installOverlay" onclick="if(event.target===this)closeInstall()">
+    <div class="install-card">
+      <h3 id="installTitle">Install ODIYA</h3>
+      <p id="installDesc">Add ODIYA to your home screen for quick access during emergencies.</p>
+      <div class="steps">
+        <div class="step"><span class="step-num">1</span><span id="installStep1">Tap the <strong>Share</strong> button <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> at the bottom</span></div>
+        <div class="step"><span class="step-num">2</span><span id="installStep2">Scroll and tap <strong>"Add to Home Screen"</strong></span></div>
+        <div class="step"><span class="step-num">3</span><span id="installStep3">Tap <strong>"Add"</strong> to confirm</span></div>
+      </div>
+      <p id="installNote" style="font-size:12px;color:#999">Works best in Safari on iPhone</p>
+      <button class="install-close" onclick="closeInstall()" id="installCloseBtn">OK</button>
+    </div>
   </div>
 
   <div class="brand">
@@ -759,7 +786,15 @@ const i18n = {
       offlineTitle: '\uC778\uD130\uB137 \uC5F0\uACB0 \uC5C6\uC74C',
       offlineMsg: '\uC8FC\uC18C\uB97C \uAC00\uC838\uC62C \uC218 \uC5C6\uC2B5\uB2C8\uB2E4. GPS \uC88C\uD45C:',
       openGmaps: 'Google \uC9C0\uB3C4\uC5D0\uC11C \uBCF4\uAE30',
-      offlineTip: '\uD301: Google \uC9C0\uB3C4\uC5D0\uC11C \uC624\uD504\uB77C\uC778 \uC9C0\uB3C4\uB97C \uB2E4\uC6B4\uB85C\uB4DC\uD558\uBA74 \uC778\uD130\uB137 \uC5C6\uC774\uB3C4 \uC704\uCE58\uB97C \uD655\uC778\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4'},
+      offlineTip: '\uD301: Google \uC9C0\uB3C4\uC5D0\uC11C \uC624\uD504\uB77C\uC778 \uC9C0\uB3C4\uB97C \uB2E4\uC6B4\uB85C\uB4DC\uD558\uBA74 \uC778\uD130\uB137 \uC5C6\uC774\uB3C4 \uC704\uCE58\uB97C \uD655\uC778\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4',
+    installBtn: "설치",
+    installTitle: "ODIYA 설치",
+    installDesc: "홈 화면에 ODIYA를 추가하면 긴급 상황에 빠르게 사용할 수 있습니다.",
+    installStep1: "<strong>공유</strong> 버튼을 탭하세요",
+    installStep2: "<strong>홈 화면에 추가</strong>를 탭하세요",
+    installStep3: "<strong>추가</strong>를 탭하여 확인하세요",
+    installNote: "iPhone의 Safari에서 가장 잘 작동합니다",
+    installClose: "확인"},
   en: {
     title: "Where Am I?",
     subtitle: "Emergency Location Helper",
@@ -792,7 +827,15 @@ const i18n = {
       offlineTitle: 'No Internet Connection',
       offlineMsg: 'Cannot get address. GPS coordinates:',
       openGmaps: 'Open in Google Maps',
-      offlineTip: 'Tip: Download offline maps in Google Maps to see your location without internet'},
+      offlineTip: 'Tip: Download offline maps in Google Maps to see your location without internet',
+    installBtn: "Install",
+    installTitle: "Install ODIYA",
+    installDesc: "Add ODIYA to your home screen for quick access during emergencies.",
+    installStep1: "Tap the <strong>Share</strong> button at the bottom",
+    installStep2: "Scroll and tap <strong>Add to Home Screen</strong>",
+    installStep3: "Tap <strong>Add</strong> to confirm",
+    installNote: "Works best in Safari on iPhone",
+    installClose: "OK"},
   zh: {
     title: "我在哪里?",
     subtitle: "紧急位置助手",
@@ -825,7 +868,15 @@ const i18n = {
       offlineTitle: '\u65E0\u7F51\u7EDC\u8FDE\u63A5',
       offlineMsg: '\u65E0\u6CD5\u83B7\u53D6\u5730\u5740\u3002GPS\u5750\u6807:',
       openGmaps: '\u5728Google\u5730\u56FE\u4E2D\u67E5\u770B',
-      offlineTip: '\u63D0\u793A: \u5728Google\u5730\u56FE\u4E2D\u4E0B\u8F7D\u79BB\u7EBF\u5730\u56FE\uFF0C\u5373\u53EF\u5728\u65E0\u7F51\u7EDC\u65F6\u67E5\u770B\u4F4D\u7F6E'},
+      offlineTip: '\u63D0\u793A: \u5728Google\u5730\u56FE\u4E2D\u4E0B\u8F7D\u79BB\u7EBF\u5730\u56FE\uFF0C\u5373\u53EF\u5728\u65E0\u7F51\u7EDC\u65F6\u67E5\u770B\u4F4D\u7F6E',
+    installBtn: "安装",
+    installTitle: "安装 ODIYA",
+    installDesc: "将ODIYA添加到主屏幕，紧急情况下快速使用。",
+    installStep1: "点击底部的<strong>分享</strong>按钮",
+    installStep2: "滚动并点击<strong>添加到主屏幕</strong>",
+    installStep3: "点击<strong>添加</strong>确认",
+    installNote: "在iPhone的Safari中效果最佳",
+    installClose: "确定"},
   ja: {
     title: "今どこ?",
     subtitle: "緊急位置ヘルパー",
@@ -858,7 +909,15 @@ const i18n = {
       offlineTitle: '\u30AA\u30D5\u30E9\u30A4\u30F3\u3067\u3059',
       offlineMsg: '\u4F4F\u6240\u3092\u53D6\u5F97\u3067\u304D\u307E\u305B\u3093\u3002GPS\u5EA7\u6A19:',
       openGmaps: 'Google\u30DE\u30C3\u30D7\u3067\u898B\u308B',
-      offlineTip: '\u30D2\u30F3\u30C8: Google\u30DE\u30C3\u30D7\u3067\u30AA\u30D5\u30E9\u30A4\u30F3\u5730\u56F3\u3092\u30C0\u30A6\u30F3\u30ED\u30FC\u30C9\u3059\u308B\u3068\u3001\u30A4\u30F3\u30BF\u30FC\u30CD\u30C3\u30C8\u306A\u3057\u3067\u3082\u4F4D\u7F6E\u3092\u78BA\u8A8D\u3067\u304D\u307E\u3059'},
+      offlineTip: '\u30D2\u30F3\u30C8: Google\u30DE\u30C3\u30D7\u3067\u30AA\u30D5\u30E9\u30A4\u30F3\u5730\u56F3\u3092\u30C0\u30A6\u30F3\u30ED\u30FC\u30C9\u3059\u308B\u3068\u3001\u30A4\u30F3\u30BF\u30FC\u30CD\u30C3\u30C8\u306A\u3057\u3067\u3082\u4F4D\u7F6E\u3092\u78BA\u8A8D\u3067\u304D\u307E\u3059',
+    installBtn: "インストール",
+    installTitle: "ODIYAをインストール",
+    installDesc: "ホーム画面にODIYAを追加して緊急時に素早くアクセス。",
+    installStep1: "下部の<strong>共有</strong>ボタンをタップ",
+    installStep2: "<strong>ホーム画面に追加</strong>をタップ",
+    installStep3: "<strong>追加</strong>をタップして確認",
+    installNote: "iPhoneのSafariで最適",
+    installClose: "OK"},
   es: {
     title: "Dónde Estoy?",
     subtitle: "Ayuda de ubicación de emergencia",
@@ -892,7 +951,15 @@ const i18n = {
       offlineMsg: 'No se puede obtener la direcci\u00F3n. Coordenadas GPS:',
       openGmaps: 'Ver en Google Maps',
       offlineTip: 'Consejo: Descargue mapas sin conexi\u00F3n en Google Maps para ver su ubicaci\u00F3n sin Internet'}
-};
+,
+    installBtn: "Instalar",
+    installTitle: "Instalar ODIYA",
+    installDesc: "Agrega ODIYA a tu pantalla de inicio para acceso rápido en emergencias.",
+    installStep1: "Toca el botón <strong>Compartir</strong> en la parte inferior",
+    installStep2: "Desplázate y toca <strong>Agregar a inicio</strong>",
+    installStep3: "Toca <strong>Agregar</strong> para confirmar",
+    installNote: "Funciona mejor en Safari en iPhone",
+    installClose: "OK"};
 
 let currentLang = 'ko';
 let currentLat = null;
@@ -1417,7 +1484,33 @@ const storyI18n = {
   }
 };
 
-function openStory() {
+// Install button logic
+    function showInstallGuide() {
+      const lang = currentLang || 'en';
+      const t = i18n[lang] || i18n.en;
+      const el = document.getElementById;
+      if (t.installTitle) document.getElementById('installTitle').textContent = t.installTitle;
+      if (t.installDesc) document.getElementById('installDesc').textContent = t.installDesc;
+      if (t.installStep1) document.getElementById('installStep1').innerHTML = t.installStep1;
+      if (t.installStep2) document.getElementById('installStep2').innerHTML = t.installStep2;
+      if (t.installStep3) document.getElementById('installStep3').innerHTML = t.installStep3;
+      if (t.installNote) document.getElementById('installNote').textContent = t.installNote;
+      if (t.installClose) document.getElementById('installCloseBtn').textContent = t.installClose;
+      document.getElementById('installOverlay').classList.add('show');
+    }
+    function closeInstall() {
+      document.getElementById('installOverlay').classList.remove('show');
+    }
+    // Show install button only if NOT already installed as PWA
+    (function checkInstallBtn() {
+      var isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+      if (!isStandalone) {
+        var btn = document.getElementById('installBtn');
+        if (btn) btn.style.display = '';
+      }
+    })();
+
+    function openStory() {
   const s = storyI18n[currentLang] || storyI18n.en;
   document.getElementById('storyTitle').textContent = s.storyTitle;
   // Update story content
