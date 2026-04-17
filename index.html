@@ -1027,6 +1027,20 @@ async function generateScript(lat, lng, data) {
       if (enhanced) loc = enhanced;
     }
   } catch(e) {}
+
+  // Append nearby POI/landmark info for better location context
+  try {
+    if (window.OdiyaLocation && window.OdiyaLocation.findNearbyPOI && window.lastPosition) {
+      const poiLang = typeof getLocalLanguage === 'function' ? getLocalLanguage() : 'en';
+      const poi = await window.OdiyaLocation.findNearbyPOI(lat, lng, poiLang);
+      if (poi && poi.name && poi.distText) {
+        const poiLine = (poiLang === 'ko')
+          ? poi.name + ' ' + poi.direction + ' ' + poi.distText
+          : poi.distText + ' ' + poi.direction + ' of ' + poi.name;
+        loc += '\n' + poiLine;
+      }
+    }
+  } catch(e) {}
   window.lastLocationText = loc;
 
   // Determine local language for the script
