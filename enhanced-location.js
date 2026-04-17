@@ -415,9 +415,58 @@
     });
   }
 
+
+  /** Find nearest named business/landmark with distance and direction. */
+  async function findNearbyPOI(lat, lon, lang) {
+    const q = `
+      [out:json][timeout:4];
+      (
+        node(around:800,${lat},${lon})["name"]["amenity"~"fuel|hospital|police|fire_station|restaurant|cafe|bank|pharmacy|supermarket|parking"];
+        node(around:800,${lat},${lon})["name"]["shop"];
+        node(around:800,${lat},${lon})["name"]["tourism"~"hotel|museum|attraction"];
+        node(around:800,${lat},${lon})["name"]["leisure"~"park|stadium"];
+        way(around:800,${lat},${lon})["name"]["shop"];
+        way(around:800,${lat},${lon})["name"]["amenity"~"fuel|hospital|police|fire_station|restaurant|cafe|bank|pharmacy|supermarket|parking"];
+      );
+      out center body 10;
+    `;
+    try {
+      const data = await withTimeout(overpass(q), OVERPASS_TIMEOUT_MS);
+      if (!data || !data.elements || data.elements.length === 0) return null;
+      let best = null;
+      let bestDist = Infinity;
+      for (const e of data.elements) {
+        const eLat = e.lat || (e.center && e.center.lat);
+        const eLon = e.lon || (e.center && e.center.lon);
+        if (!eLat || !eLon || !e.tags || !e.tags.name) continue;
+        const d = haversine(lat, lon, eLat, eLon);
+        if (d < bestDist) {
+          bestDist = d;
+          best = {
+            name: e.tags.name,
+            brand: e.tags.brand || null,
+            kind: e.tags.amenity || e.tags.shop || e.tags.tourism || e.tags.leisure || null,
+            distance_m: d,
+            lat: eLat,
+            lon: eLon
+          };
+        }
+      }
+      if (!best) return null;
+      const dir = bearingToCardinal(bearing(lat, lon, best.lat, best.lon));
+      const dist = fmtDistance(best.distance_m, lang || 'en');
+      best.direction = dir;
+      best.distText = dist;
+      return best;
+    } catch (e) {
+      return null;
+    }
+  }
+
   // ---------- public API ----------
   global.OdiyaLocation = {
     describe,
+    findNearbyPOI,
     // exposed for testing / reuse:
     _internal: {
       findHighwayContext,
