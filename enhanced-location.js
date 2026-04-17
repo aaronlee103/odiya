@@ -414,13 +414,13 @@
     const q = `
       [out:json][timeout:5];
       (
-        node(around:1000,${lat},${lon})["brand"];
+        node(around:500,${lat},${lon})["brand"];
         node(around:800,${lat},${lon})["name"]["amenity"~"fuel|hospital|police|fire_station|school|bank|pharmacy|car_rental"];
         node(around:800,${lat},${lon})["name"]["shop"~"car|supermarket|mall|department_store|car_repair|car_parts"];
         node(around:600,${lat},${lon})["name"]["amenity"~"restaurant|cafe|fast_food"];
         node(around:500,${lat},${lon})["name"]["shop"];
         node(around:500,${lat},${lon})["name"]["amenity"];
-        way(around:1000,${lat},${lon})["brand"];
+        way(around:500,${lat},${lon})["brand"];
         way(around:800,${lat},${lon})["name"]["amenity"~"fuel|hospital|police|fire_station|school|bank|pharmacy|car_rental"];
         way(around:800,${lat},${lon})["name"]["shop"~"car|supermarket|mall|department_store|car_repair|car_parts"];
         way(around:500,${lat},${lon})["name"]["shop"];
@@ -446,14 +446,16 @@
         // Scoring: lower = better
         let score = d; // base: distance in meters
 
-        // Brand bonus: branded places are more recognizable (-300m advantage)
-        if (e.tags.brand) score -= 300;
+        // Brand bonus: branded places with known type get bigger bonus
+        if (e.tags.brand && (e.tags.amenity || e.tags.shop)) score -= 300;
+        else if (e.tags.brand) score -= 100;
 
         // Type bonus for highly visible landmarks
         const amenity = e.tags.amenity || '';
         const shop = e.tags.shop || '';
         if (amenity === 'hospital' || amenity === 'police' || amenity === 'fire_station') score -= 400;
-        else if (shop === 'car' || shop === 'supermarket' || shop === 'mall' || shop === 'department_store') score -= 250;
+        else if (shop === 'car') score -= 350;
+        else if (shop === 'supermarket' || shop === 'mall' || shop === 'department_store') score -= 250;
         else if (amenity === 'school' || amenity === 'fuel') score -= 200;
         else if (amenity === 'bank' || amenity === 'pharmacy') score -= 100;
 
