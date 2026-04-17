@@ -451,7 +451,50 @@
   .tip strong { color: #666; }
 
   .hidden { display: none !important; }
-</style>
+
+  /* Offline mode */
+  .offline-card {
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    border-radius: 12px;
+    padding: 16px;
+    margin-top: 12px;
+    text-align: center;
+  }
+  .offline-card p {
+    margin: 8px 0;
+    font-size: 14px;
+    color: #664d03;
+  }
+  .offline-coords {
+    font-family: monospace;
+    font-size: 18px;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin: 12px 0;
+  }
+  .gmaps-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #4285f4;
+    color: #fff;
+    text-decoration: none;
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    margin: 8px 0;
+    border: none;
+    cursor: pointer;
+  }
+  .gmaps-btn:active { background: #3367d6; }
+  .offline-tip {
+    font-size: 12px;
+    color: #888;
+    margin-top: 8px;
+  }
+  </style>
 </head>
 <body>
 
@@ -713,7 +756,11 @@ const i18n = {
     errorTimeout: "시간 초과. 다시 시도해주세요.",
     errorGeneral: "위치를 가져올 수 없습니다.",
     noGeo: "이 브라우저는 위치 서비스를 지원하지 않습니다.",
-  },
+  ,
+      offlineTitle: '\uC778\uD130\uB137 \uC5F0\uACB0 \uC5C6\uC74C',
+      offlineMsg: '\uC8FC\uC18C\uB97C \uAC00\uC838\uC62C \uC218 \uC5C6\uC2B5\uB2C8\uB2E4. GPS \uC88C\uD45C:',
+      openGmaps: 'Google \uC9C0\uB3C4\uC5D0\uC11C \uBCF4\uAE30',
+      offlineTip: '\uD301: Google \uC9C0\uB3C4\uC5D0\uC11C \uC624\uD504\uB77C\uC778 \uC9C0\uB3C4\uB97C \uB2E4\uC6B4\uB85C\uB4DC\uD558\uBA74 \uC778\uD130\uB137 \uC5C6\uC774\uB3C4 \uC704\uCE58\uB97C \uD655\uC778\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4'},
   en: {
     title: "Where Am I?",
     subtitle: "Emergency Location Helper",
@@ -743,7 +790,11 @@ const i18n = {
     errorTimeout: "Timed out. Please try again.",
     errorGeneral: "Could not get location.",
     noGeo: "Location services not supported.",
-  },
+  ,
+      offlineTitle: 'No Internet Connection',
+      offlineMsg: 'Cannot get address. GPS coordinates:',
+      openGmaps: 'Open in Google Maps',
+      offlineTip: 'Tip: Download offline maps in Google Maps to see your location without internet'},
   zh: {
     title: "我在哪里?",
     subtitle: "紧急位置助手",
@@ -773,7 +824,11 @@ const i18n = {
     errorTimeout: "超时，请重试。",
     errorGeneral: "无法获取位置。",
     noGeo: "浏览器不支持位置服务。",
-  },
+  ,
+      offlineTitle: '\u65E0\u7F51\u7EDC\u8FDE\u63A5',
+      offlineMsg: '\u65E0\u6CD5\u83B7\u53D6\u5730\u5740\u3002GPS\u5750\u6807:',
+      openGmaps: '\u5728Google\u5730\u56FE\u4E2D\u67E5\u770B',
+      offlineTip: '\u63D0\u793A: \u5728Google\u5730\u56FE\u4E2D\u4E0B\u8F7D\u79BB\u7EBF\u5730\u56FE\uFF0C\u5373\u53EF\u5728\u65E0\u7F51\u7EDC\u65F6\u67E5\u770B\u4F4D\u7F6E'},
   ja: {
     title: "今どこ?",
     subtitle: "緊急位置ヘルパー",
@@ -803,7 +858,11 @@ const i18n = {
     errorTimeout: "タイムアウト。もう一度お試しください。",
     errorGeneral: "位置を取得できません。",
     noGeo: "位置情報サービス非対応。",
-  },
+  ,
+      offlineTitle: '\u30AA\u30D5\u30E9\u30A4\u30F3\u3067\u3059',
+      offlineMsg: '\u4F4F\u6240\u3092\u53D6\u5F97\u3067\u304D\u307E\u305B\u3093\u3002GPS\u5EA7\u6A19:',
+      openGmaps: 'Google\u30DE\u30C3\u30D7\u3067\u898B\u308B',
+      offlineTip: '\u30D2\u30F3\u30C8: Google\u30DE\u30C3\u30D7\u3067\u30AA\u30D5\u30E9\u30A4\u30F3\u5730\u56F3\u3092\u30C0\u30A6\u30F3\u30ED\u30FC\u30C9\u3059\u308B\u3068\u3001\u30A4\u30F3\u30BF\u30FC\u30CD\u30C3\u30C8\u306A\u3057\u3067\u3082\u4F4D\u7F6E\u3092\u78BA\u8A8D\u3067\u304D\u307E\u3059'},
   es: {
     title: "Dónde Estoy?",
     subtitle: "Ayuda de ubicación de emergencia",
@@ -833,7 +892,11 @@ const i18n = {
     errorTimeout: "Tiempo agotado. Intente de nuevo.",
     errorGeneral: "No se pudo obtener ubicación.",
     noGeo: "Navegador no compatible.",
-  }
+  ,
+      offlineTitle: 'Sin conexi\u00F3n a Internet',
+      offlineMsg: 'No se puede obtener la direcci\u00F3n. Coordenadas GPS:',
+      openGmaps: 'Ver en Google Maps',
+      offlineTip: 'Consejo: Descargue mapas sin conexi\u00F3n en Google Maps para ver su ubicaci\u00F3n sin Internet'}
 };
 
 let currentLang = 'ko';
@@ -960,7 +1023,12 @@ function getLocation() {
       else badge.textContent = `${i18n[currentLang].accuracyPoor} (~${Math.round(accuracy)}m)`;
 
       document.getElementById('timestamp').textContent = new Date().toLocaleString();
-      reverseGeocode(currentLat, currentLng);
+// Check if online before reverse geocoding
+      if (!navigator.onLine) {
+        showOfflineResult(currentLat, currentLng);
+      } else {
+        reverseGeocode(currentLat, currentLng);
+      }
       updateMap(currentLat, currentLng);
     },
     (err) => {
@@ -1461,6 +1529,49 @@ async function doPhotoShareNow() {
 setLang('ko');
 
 // Register Service Worker for PWA
+    // --- Offline result display ---
+    function showOfflineResult(lat, lng) {
+      const t = i18n[currentLang] || i18n.en;
+      const btn = document.getElementById('locateBtn');
+      const spinner = document.getElementById('spinner');
+      if (btn) btn.disabled = false;
+      if (spinner) spinner.style.display = 'none';
+
+      const resultArea = document.getElementById('result');
+      if (resultArea) {
+        resultArea.style.display = 'block';
+
+        const locationEl = document.getElementById('locationText');
+        if (locationEl) {
+          locationEl.innerHTML = '<div class="offline-card">' +
+            '<p><strong>' + t.offlineTitle + '</strong></p>' +
+            '<p>' + t.offlineMsg + '</p>' +
+            '<div class="offline-coords">' + lat.toFixed(6) + ', ' + lng.toFixed(6) + '</div>' +
+            '<a class="gmaps-btn" href="https://maps.google.com/?q=' + lat + ',' + lng + '" target="_blank">' +
+              '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>' +
+              t.openGmaps +
+            '</a>' +
+            '<p class="offline-tip">' + t.offlineTip + '</p>' +
+          '</div>';
+        }
+
+        const copyBtn = document.getElementById('copyBtn');
+        if (copyBtn) {
+          copyBtn.style.display = 'block';
+          copyBtn.onclick = function() {
+            const text = lat.toFixed(6) + ', ' + lng.toFixed(6);
+            navigator.clipboard.writeText(text);
+          };
+        }
+
+        const shareBtn = document.getElementById('shareBtn');
+        if (shareBtn && navigator.share) shareBtn.style.display = 'block';
+      }
+
+      const slideCall = document.getElementById('slideCall');
+      if (slideCall) slideCall.style.display = 'flex';
+    }
+
     // --- Slide-to-call interaction ---
     (function() {
       const thumb = document.getElementById('slideThumb');
