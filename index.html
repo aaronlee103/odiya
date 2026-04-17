@@ -334,72 +334,41 @@
     color: #333;
   }
 
-  /* Slide to call */
+  /* Call button */
   .slide-call {
     position: relative;
+    background: #1e293b;
+    border-radius: 50px;
+    height: 68px;
     width: 100%;
-    height: 52px;
-    margin-top: 12px;
-    background: #1a1a1a;
-    border-radius: 26px;
+    box-sizing: border-box;
     overflow: hidden;
-    touch-action: none;
     user-select: none;
     -webkit-user-select: none;
+    touch-action: none;
+    margin-top: 12px;
   }
   .slide-call-track {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: rgba(255,255,255,0.5);
-    font-size: 14px;
-    font-weight: 500;
-    pointer-events: none;
-    transition: opacity 0.2s;
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    color: rgba(255,255,255,0.5); font-size: 1.1rem; font-weight: 600;
+    pointer-events: none; transition: color 0.2s;
   }
-  .slide-call-track svg {
-    width: 14px; height: 14px;
-    margin-right: 6px;
-    animation: slideHint 1.5s ease-in-out infinite;
-    stroke: rgba(255,255,255,0.5);
-  }
+  .slide-call-track svg { width: 20px; height: 20px; animation: slideHint 1.5s ease-in-out infinite; }
   @keyframes slideHint {
     0%, 100% { transform: translateX(0); opacity: 0.5; }
-    50% { transform: translateX(6px); opacity: 1; }
+    50% { transform: translateX(8px); opacity: 1; }
   }
   .slide-call-thumb {
-    position: absolute;
-    top: 3px;
-    left: 3px;
-    width: 46px;
-    height: 46px;
-    border-radius: 50%;
-    background: #fff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: grab;
-    transition: left 0.15s ease;
-    z-index: 2;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    position: absolute; left: 4px; top: 4px; width: 60px; height: 60px;
+    border-radius: 50%; background: #fff;
+    display: flex; align-items: center; justify-content: center;
+    cursor: grab; z-index: 2; transition: left 0.1s ease-out;
   }
-  .slide-call-thumb.dragging {
-    transition: none;
-    cursor: grabbing;
-  }
-  .slide-call-thumb svg {
-    width: 20px; height: 20px;
-    stroke: #1a1a1a;
-  }
-  .slide-call.activated {
-    background: #dc2626;
-  }
-  .slide-call.activated .slide-call-track {
-    color: #fff;
-    opacity: 1;
-  }
+  .slide-call-thumb:active { cursor: grabbing; }
+  .slide-call-thumb svg { width: 28px; height: 28px; color: #dc2626; }
+  .slide-call.activated { background: #dc2626; }
+  .slide-call.activated .slide-call-track { color: rgba(255,255,255,0.9); }
 
   /* Info cards */
   .info-card {
@@ -597,11 +566,11 @@
 
     <div class="slide-call" id="slideCall">
       <div class="slide-call-track" id="slideTrack">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
         <span id="callBtnText">911 전화하기</span>
       </div>
       <div class="slide-call-thumb" id="slideThumb">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.361 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
       </div>
     </div>
 
@@ -901,21 +870,21 @@ function updateEmergencyUI() {
     }
   }
 
-  // Update call slider
-  const callText = document.getElementById('callBtnText');
-  window._emergencyNum = num;
-  if (callText) {
-    if (currentLang === 'ja') {
-      callText.textContent = num + t.callText;
-    } else if (currentLang === 'zh') {
-      callText.textContent = t.callText + num;
-    } else if (currentLang === 'ko') {
-      callText.textContent = num + ' ' + t.callText;
-    } else {
-      callText.textContent = t.callText + ' ' + num;
+      // Update call slider
+      window._emergencyNum = num;
+      const callText = document.getElementById('callBtnText');
+      if (callText) {
+        if (currentLang === 'ja') {
+          callText.textContent = num + t.callText;
+        } else if (currentLang === 'zh') {
+          callText.textContent = t.callText + num;
+        } else if (currentLang === 'ko') {
+          callText.textContent = num + ' ' + t.callText;
+        } else {
+          callText.textContent = t.callText + ' ' + num;
+        }
+      }
     }
-  }
-
 function setLang(lang) {
   currentLang = lang;
   const map = {ko:'한국어',en:'EN',zh:'中文',ja:'日本語',es:'ES'};
@@ -1492,83 +1461,53 @@ async function doPhotoShareNow() {
 setLang('ko');
 
 // Register Service Worker for PWA
-
-
-  // ---- Slide-to-call ----
-  (function() {
-    const slider = document.getElementById('slideCall');
-    const thumb = document.getElementById('slideThumb');
-    if (!slider || !thumb) return;
-
-    let dragging = false;
-    let startX = 0;
-    let currentX = 3;
-    const THUMB_SIZE = 46;
-    const PADDING = 3;
-
-    function getMaxX() { return slider.offsetWidth - THUMB_SIZE - PADDING; }
-
-    function onStart(e) {
-      dragging = true;
-      startX = (e.touches ? e.touches[0].clientX : e.clientX) - currentX;
-      thumb.classList.add('dragging');
-      e.preventDefault();
-    }
-
-    function onMove(e) {
-      if (!dragging) return;
-      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-      let x = clientX - startX;
-      const maxX = getMaxX();
-      x = Math.max(PADDING, Math.min(x, maxX));
-      currentX = x;
-      thumb.style.left = x + 'px';
-
-      const pct = (x - PADDING) / (maxX - PADDING);
-      if (pct > 0.5) {
-        slider.style.background = 'rgb(' + Math.round(220 - pct * 194) + ',' + Math.round(38) + ',' + Math.round(38) + ')';
-      } else {
-        slider.style.background = '#1a1a1a';
+    // --- Slide-to-call interaction ---
+    (function() {
+      const thumb = document.getElementById('slideThumb');
+      const track = document.getElementById('slideCall');
+      if (!thumb || !track) return;
+      let dragging = false, startX = 0, thumbLeft = 4;
+      const THUMB_W = 60, PAD = 4;
+      function getMaxLeft() { return track.offsetWidth - THUMB_W - PAD; }
+      function onStart(e) {
+        dragging = true;
+        startX = (e.touches ? e.touches[0].clientX : e.clientX) - thumbLeft;
+        thumb.style.transition = 'none';
+        e.preventDefault();
       }
-      e.preventDefault();
-    }
-
-    function onEnd() {
-      if (!dragging) return;
-      dragging = false;
-      thumb.classList.remove('dragging');
-      const maxX = getMaxX();
-      const pct = (currentX - PADDING) / (maxX - PADDING);
-
-      if (pct > 0.85) {
-        slider.classList.add('activated');
-        thumb.style.left = maxX + 'px';
-        const num = window._emergencyNum || '911';
-        setTimeout(function() {
+      function onMove(e) {
+        if (!dragging) return;
+        const x = (e.touches ? e.touches[0].clientX : e.clientX) - startX;
+        const max = getMaxLeft();
+        thumbLeft = Math.max(PAD, Math.min(x, max));
+        thumb.style.left = thumbLeft + 'px';
+        const pct = (thumbLeft - PAD) / (max - PAD);
+        if (pct > 0.5) { track.classList.add('activated'); }
+        else { track.classList.remove('activated'); }
+      }
+      function onEnd() {
+        if (!dragging) return;
+        dragging = false;
+        const max = getMaxLeft();
+        const pct = (thumbLeft - PAD) / (max - PAD);
+        if (pct >= 0.85) {
+          const num = window._emergencyNum || '911';
           window.location.href = 'tel:' + num;
-          setTimeout(function() {
-            slider.classList.remove('activated');
-            slider.style.background = '#1a1a1a';
-            thumb.style.left = PADDING + 'px';
-            currentX = PADDING;
-          }, 1000);
-        }, 200);
-      } else {
-        thumb.style.left = PADDING + 'px';
-        currentX = PADDING;
-        slider.style.background = '#1a1a1a';
+        }
+        thumb.style.transition = 'left 0.3s ease-out';
+        thumbLeft = PAD;
+        thumb.style.left = PAD + 'px';
+        track.classList.remove('activated');
       }
-    }
+      thumb.addEventListener('touchstart', onStart, {passive: false});
+      thumb.addEventListener('mousedown', onStart);
+      document.addEventListener('touchmove', onMove, {passive: false});
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('touchend', onEnd);
+      document.addEventListener('mouseup', onEnd);
+    })();
 
-    thumb.addEventListener('touchstart', onStart, { passive: false });
-    thumb.addEventListener('mousedown', onStart);
-    document.addEventListener('touchmove', onMove, { passive: false });
-    document.addEventListener('mousemove', onMove);
-    document.addEventListener('touchend', onEnd);
-    document.addEventListener('mouseup', onEnd);
-  })();
-
-  if ('serviceWorker' in navigator) {
+if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js').catch(() => {});
 }
 
